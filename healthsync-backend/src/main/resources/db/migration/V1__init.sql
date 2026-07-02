@@ -1,0 +1,2 @@
+-- HealthSync AI Initial Migration Placeholder
+-- Flyway migration file
