@@ -20,79 +20,20 @@ import {
   ClipboardList
 } from 'lucide-react';
 
-interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  gender: string;
-  status: 'OPD' | 'IPD';
-  condition: 'Resuscitation' | 'Urgent' | 'Semi-Urgent' | 'Stable';
-  emergency: boolean;
-  history: string;
-  registeredAt: string;
-  wardType?: 'ICU' | 'General' | 'Emergency';
-  timeline: { title: string; desc: string; date: string }[];
-}
+import { Patient } from '../../types/index';
 
 export const PatientFootfall: React.FC = () => {
-  const { registerPatient } = useApp();
-
-  // Mock registered patients state
-  const [patientsList, setPatientsList] = useState<Patient[]>([
-    {
-      id: 'pat-101',
-      name: 'Sarah Connor',
-      age: 42,
-      gender: 'Female',
-      status: 'IPD',
-      condition: 'Urgent',
-      emergency: true,
-      history: 'Cardiorespiratory strain, pneumonia watch.',
-      registeredAt: 'Today, 09:15 AM',
-      wardType: 'ICU',
-      timeline: [
-        { title: 'Registered Node', desc: 'Registered in Metro General central gate admissions.', date: 'Today, 09:15 AM' },
-        { title: 'Triage Sorting', desc: 'Assigned Orange Urgent classification.', date: 'Today, 09:20 AM' },
-        { title: 'Bed Allocated', desc: 'Transferred to ICU Room Bed-12B.', date: 'Today, 09:40 AM' }
-      ]
-    },
-    {
-      id: 'pat-102',
-      name: 'Julian Ross',
-      age: 28,
-      gender: 'Male',
-      status: 'OPD',
-      condition: 'Stable',
-      emergency: false,
-      history: 'Minor tissue laceration, local dressing.',
-      registeredAt: 'Today, 08:30 AM',
-      timeline: [
-        { title: 'Registered Node', desc: 'Registered in Outpatient triage desk.', date: 'Today, 08:30 AM' },
-        { title: 'Dressing Complete', desc: 'Local wound dressing sanitized.', date: 'Today, 08:50 AM' },
-        { title: 'Discharged', desc: 'Prescribed minor antibiotic and discharged.', date: 'Today, 09:10 AM' }
-      ]
-    },
-    {
-      id: 'pat-103',
-      name: 'Emma Watson',
-      age: 35,
-      gender: 'Female',
-      status: 'IPD',
-      condition: 'Resuscitation',
-      emergency: true,
-      history: 'Acute respiratory distress syndrome.',
-      registeredAt: 'Yesterday, 11:20 PM',
-      wardType: 'Emergency',
-      timeline: [
-        { title: 'Ambulance Arrival', desc: 'Admitted via Emergency Ambulance dispatch.', date: 'Yesterday, 11:20 PM' },
-        { title: 'Resuscitation', desc: 'Intubated and stabilized under cardiac monitors.', date: 'Yesterday, 11:30 PM' }
-      ]
-    }
-  ]);
+  const { registerPatient, dischargePatient, patients: patientsList, activeHospitalId } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(patientsList[0]);
+  const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
+
+  React.useEffect(() => {
+    if (!selectedPatient && patientsList.length > 0) {
+      setSelectedPatient(patientsList[0]);
+    }
+  }, [patientsList, selectedPatient]);
 
   // Form states
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -136,24 +77,27 @@ export const PatientFootfall: React.FC = () => {
       history: formHistory,
       registeredAt: 'Today, Just now',
       wardType: formStatus === 'IPD' ? formWard : undefined,
+      hospitalId: activeHospitalId,
       timeline: [
         { title: 'Admissions Desk', desc: `Registered as ${formStatus} status.`, date: 'Today, Just now' },
         { title: 'Triage Sort', desc: `Assigned ${formCondition} classification.`, date: 'Today, Just now' }
       ]
     };
 
-    // Update state
-    setPatientsList(prev => [newPatient, ...prev]);
     setSelectedPatient(newPatient);
     
     // Trigger global admissions sync for bed assignment
     registerPatient({
+      id: newPatient.id,
       name: formName,
+      age: formAge,
+      gender: formGender,
       status: formStatus,
       condition: formCondition,
-      wardType: formWard,
+      wardType: formStatus === 'IPD' ? formWard : undefined,
       emergency: formEmergency,
-      history: formHistory
+      history: formHistory,
+      timeline: newPatient.timeline
     });
 
     setIsRegisterOpen(false);
@@ -209,6 +153,27 @@ export const PatientFootfall: React.FC = () => {
         <span className={`text-[10px] font-bold uppercase tracking-wider ${row.emergency ? 'text-destructive font-black' : 'text-slate-400'}`}>
           {row.emergency ? 'Critical Code Red' : 'Normal'}
         </span>
+      )
+    },
+    {
+      header: 'Actions',
+      accessor: (row: Patient) => (
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          {row.status === 'IPD' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                dischargePatient(row.id);
+              }}
+              className="text-[10px] text-destructive border-destructive/20 hover:bg-destructive/10 py-1 px-2.5 font-bold h-7 animate-pulse"
+            >
+              Discharge
+            </Button>
+          ) : (
+            <span className="text-[10px] text-muted-foreground font-semibold px-2">Discharged</span>
+          )}
+        </div>
       )
     }
   ];
@@ -420,7 +385,7 @@ export const PatientFootfall: React.FC = () => {
                   <div>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">Clinical Operations Tracker:</span>
                     <div className="relative pl-4 border-l border-border/80 ml-2 space-y-4 text-[11px]">
-                      {selectedPatient.timeline.map((step, idx) => (
+                      {selectedPatient.timeline?.map((step: any, idx: number) => (
                         <div key={idx} className="relative">
                           <span className="absolute -left-5 top-1 h-2 w-2 rounded-full bg-primary ring-4 ring-background" />
                           <div className="flex flex-col">

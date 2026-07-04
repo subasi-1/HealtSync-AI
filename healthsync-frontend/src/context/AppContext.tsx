@@ -48,6 +48,9 @@ interface AppContextType {
   acknowledgeAlert: (alertId: string) => void;
   sendChatMessage: (text: string) => void;
   triggerMockSync: () => void;
+  dispenseMedicine: (id: string, qty: number) => void;
+  dischargePatient: (id: string) => void;
+  seedDemoData: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -1102,6 +1105,170 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActivityLogs(l => [newLog, ...l.slice(0, 19)]);
   };
 
+  const dispenseMedicine = (itemId: string, qty: number) => {
+    setInventory(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const nextStock = Math.max(0, item.stockLevel - qty);
+        const daysLeft = Math.ceil(nextStock / item.dailyConsumptionRate);
+        const updated = {
+          ...item,
+          stockLevel: nextStock,
+          daysOfStockLeft: daysLeft
+        };
+
+        const facilityName = hospitals.find(h => h.id === item.hospitalId)?.name || 'Health Facility';
+        const newLog: ActivityLog = {
+          id: `log-${Date.now()}`,
+          action: `Dispensed ${qty} units of ${item.name} (Remaining stock: ${nextStock} units)`,
+          actor: currentUser?.name || 'System Staff',
+          role: currentUser?.role || 'HOSPITAL_ADMIN',
+          facilityName,
+          timestamp: 'Just now'
+        };
+        setActivityLogs(l => [newLog, ...l]);
+
+        if (nextStock <= item.safetyStockThreshold) {
+          const alertId = `alt-${Date.now()}`;
+          const newAlert: SystemAlert = {
+            id: alertId,
+            message: `Low Stock Alert: ${item.name} drops below safety limit (${nextStock} units remaining).`,
+            type: 'Critical',
+            category: 'Medicine',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            targetFacilityName: facilityName,
+            targetFacilityId: item.hospitalId,
+            acknowledged: false
+          };
+          setAlerts(a => [newAlert, ...a]);
+          addToast(`Low Stock Alert: ${item.name} is running out!`, 'error');
+
+          const randomRequest: RedistributionRequest = {
+            id: `req-${Date.now().toString().slice(-4)}`,
+            medicineName: item.name,
+            quantity: Math.max(100, item.safetyStockThreshold * 5),
+            fromHospitalId: 'hosp-2',
+            fromHospitalName: 'Valley Community Health Center',
+            toHospitalId: item.hospitalId,
+            toHospitalName: facilityName,
+            status: 'Pending',
+            urgency: 'High',
+            requestDate: 'Just now'
+          };
+          setRedistributionRequests(r => [randomRequest, ...r]);
+        } else {
+          addToast(`Successfully dispensed ${qty} units of ${item.name}`, 'success');
+        }
+
+        return updated;
+      }
+      return item;
+    }));
+  };
+
+  const dischargePatient = (patientId: string) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        setBeds(bedPrev => bedPrev.map(b => {
+          if (b.patientName === p.name) {
+            const facilityName = hospitals.find(h => h.id === b.hospitalId)?.name || 'Health Facility';
+            const cleanLog: ActivityLog = {
+              id: `log-${Date.now()}-clean`,
+              action: `Patient ${p.name} discharged. Bed ${b.roomNumber} (${b.wardType}) set to Cleaning status.`,
+              actor: currentUser?.name || 'System Staff',
+              role: currentUser?.role || 'HOSPITAL_ADMIN',
+              facilityName,
+              timestamp: 'Just now'
+            };
+            setActivityLogs(l => [cleanLog, ...l]);
+            return {
+              ...b,
+              status: 'Cleaning' as const,
+              patientName: undefined,
+              patientCondition: undefined
+            };
+          }
+          return b;
+        }));
+
+        const facilityName = hospitals.find(h => h.id === p.hospitalId)?.name || 'Health Facility';
+        const newLog: ActivityLog = {
+          id: `log-${Date.now()}`,
+          action: `Discharged patient ${p.name} (Status: Discharged)`,
+          actor: currentUser?.name || 'System Staff',
+          role: currentUser?.role || 'HOSPITAL_ADMIN',
+          facilityName,
+          timestamp: 'Just now'
+        };
+        setActivityLogs(l => [newLog, ...l]);
+        addToast(`Patient ${p.name} discharged successfully`, 'success');
+
+        return {
+          ...p,
+          status: 'OPD' as const,
+          timeline: [
+            ...(p.timeline || []),
+            { title: 'Discharged', desc: 'Patient discharged. Bed cleaning schedule initiated.', date: 'Today' }
+          ]
+        };
+      }
+      return p;
+    }));
+  };
+
+  const seedDemoData = () => {
+    setInventory(prev => prev.map(item => {
+      if (item.name === 'Paracetamol Tablets') {
+        return { ...item, stockLevel: 25, daysOfStockLeft: 1 };
+      }
+      return item;
+    }));
+
+    setBeds(prev => prev.map(b => {
+      if (b.roomNumber === 'ICU-102') {
+        return { ...b, status: 'Occupied' as const, patientName: 'John Connor', patientCondition: 'Critical' };
+      }
+      return b;
+    }));
+
+    const demoAlert: SystemAlert = {
+      id: `alt-demo-${Date.now()}`,
+      message: 'Critical Stock-out Threat: Paracetamol tablets drop to 25 units in Sunset PHC.',
+      type: 'Critical',
+      category: 'Medicine',
+      timestamp: 'Just now',
+      targetFacilityName: 'Sunset Primary Health Center',
+      targetFacilityId: 'hosp-3',
+      acknowledged: false
+    };
+    setAlerts(a => [demoAlert, ...a]);
+
+    const demoRequest: RedistributionRequest = {
+      id: 'req-demo-102',
+      medicineName: 'Paracetamol Tablets',
+      quantity: 500,
+      fromHospitalId: 'hosp-2',
+      fromHospitalName: 'Valley Community Health Center',
+      toHospitalId: 'hosp-3',
+      toHospitalName: 'Sunset Primary Health Center',
+      status: 'Pending',
+      urgency: 'High',
+      requestDate: 'Just now'
+    };
+    setRedistributionRequests(r => [demoRequest, ...r]);
+
+    const demoLog: ActivityLog = {
+      id: `log-demo-${Date.now()}`,
+      action: 'Launched Hackathon Live Simulation Data Suite',
+      actor: currentUser?.name || 'System Admin',
+      role: currentUser?.role || 'SUPER_ADMIN',
+      facilityName: 'District HQ Office',
+      timestamp: 'Just now'
+    };
+    setActivityLogs(l => [demoLog, ...l]);
+
+    addToast('Hackathon Live Demo Simulation seeder launched!', 'success');
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser,
@@ -1145,7 +1312,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       completeLabTest,
       acknowledgeAlert,
       sendChatMessage,
-      triggerMockSync
+      triggerMockSync,
+      dispenseMedicine,
+      dischargePatient,
+      seedDemoData
     }}>
       {children}
     </AppContext.Provider>

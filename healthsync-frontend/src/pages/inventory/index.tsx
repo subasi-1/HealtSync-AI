@@ -26,7 +26,8 @@ export const MedicineInventory: React.FC = () => {
     currentUser, 
     addMedicine, 
     editMedicine, 
-    deleteMedicine 
+    deleteMedicine,
+    dispenseMedicine
   } = useApp();
 
   const { data: inventory = [], isLoading } = useInventoryQuery(
@@ -249,6 +250,18 @@ export const MedicineInventory: React.FC = () => {
       header: 'Actions',
       accessor: (row: typeof inventory[0]) => (
         <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              dispenseMedicine(row.id, 10);
+            }}
+            className="h-8 w-8 text-success hover:bg-success/10 animate-pulse"
+            title="Dispense 10 units to patient"
+          >
+            <Pill className="h-3.5 w-3.5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
