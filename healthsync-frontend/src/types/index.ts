@@ -134,6 +134,21 @@ export interface ForecastData {
   alertRisk: 'High' | 'Medium' | 'Low';
 }
 
+export interface Patient {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  status: 'OPD' | 'IPD';
+  condition: 'Resuscitation' | 'Urgent' | 'Semi-Urgent' | 'Stable';
+  emergency: boolean;
+  history: string;
+  registeredAt: string;
+  wardType?: 'ICU' | 'General' | 'Emergency';
+  hospitalId: string;
+  timeline?: { title: string; desc: string; date: string }[];
+}
+
 export interface SystemAlert {
   id: string;
   message: string;
@@ -144,6 +159,8 @@ export interface SystemAlert {
   targetFacilityId: string;
   acknowledged: boolean;
 }
+
+export type Alert = SystemAlert;
 
 export interface ActivityLog {
   id: string;

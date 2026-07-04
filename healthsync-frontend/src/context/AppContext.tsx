@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   User, Hospital, InventoryItem, Bed, Doctor, 
   PatientFootfall, LabTest, RedistributionRequest, 
-  SystemAlert, ActivityLog, ChatMessage, Role, Toast 
+  SystemAlert, ActivityLog, ChatMessage, Role, Toast, Patient
 } from '../types';
 
 interface AppContextType {
@@ -15,6 +15,7 @@ interface AppContextType {
   redistributionRequests: RedistributionRequest[];
   laboratoryTests: LabTest[];
   alerts: SystemAlert[];
+  patients: Patient[];
   activityLogs: ActivityLog[];
   chatMessages: ChatMessage[];
   activeDistrictId: string;
@@ -26,7 +27,7 @@ interface AppContextType {
   addMedicine: (item: any) => void;
   editMedicine: (id: string, updates: any) => void;
   deleteMedicine: (id: string) => void;
-  assignShift: (doctorId: string, shift: Doctor['shift']) => void;
+  assignShift: (doctorId: string, shift: Doctor['shift'], department?: string) => void;
   requestLeave: (doctorId: string, isLeave: boolean) => void;
   registerPatient: (patient: any) => void;
   login: (email: string, role: Role, facilityId?: string) => Promise<boolean>;
@@ -323,6 +324,42 @@ const mockAlerts: SystemAlert[] = [
   { id: 'alt-5', message: 'Epidemic Risk Alert: 12% surge in flu-like symptoms detected across District-A PHCs.', type: 'Critical', category: 'Epidemic', timestamp: '2026-07-04 07:15 AM', targetFacilityName: 'Sunset Primary Health Center', targetFacilityId: 'hosp-3', acknowledged: false }
 ];
 
+const mockPatients: Patient[] = [
+  {
+    id: 'pat-101',
+    name: 'Sarah Connor',
+    age: 42,
+    gender: 'Female',
+    status: 'IPD',
+    condition: 'Urgent',
+    emergency: true,
+    history: 'Cardiorespiratory strain, pneumonia watch.',
+    registeredAt: 'Today, 09:15 AM',
+    wardType: 'ICU',
+    hospitalId: 'hosp-1',
+    timeline: [
+      { title: 'Registered Node', desc: 'Registered in Metro General central gate admissions.', date: 'Today, 09:15 AM' },
+      { title: 'Triage Sorting', desc: 'Assigned Orange Urgent classification.', date: 'Today, 09:20 AM' },
+      { title: 'Bed Allocated', desc: 'Transferred to ICU Room Bed-12B.', date: 'Today, 09:40 AM' }
+    ]
+  },
+  {
+    id: 'pat-102',
+    name: 'Julian Ross',
+    age: 28,
+    gender: 'Male',
+    status: 'OPD',
+    condition: 'Stable',
+    emergency: false,
+    history: 'Routine hypertension consultation.',
+    registeredAt: 'Today, 10:00 AM',
+    hospitalId: 'hosp-1',
+    timeline: [
+      { title: 'Registered Node', desc: 'Outpatient slip created at desk.', date: 'Today, 10:00 AM' }
+    ]
+  }
+];
+
 const mockActivityLogs: ActivityLog[] = [
   { id: 'log-1', action: 'Approved Paracetamol transfer request req-1', actor: 'District Admin Priya', role: 'DISTRICT_ADMIN', facilityName: 'Valley Community Health Center', timestamp: '10 mins ago' },
   { id: 'log-2', action: 'Updated Stock: Oxygen Cylinders adjusted +10', actor: 'Super Admin Rajesh', role: 'SUPER_ADMIN', facilityName: 'Metro General District Hospital', timestamp: '25 mins ago' },
@@ -351,6 +388,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [redistributionRequests, setRedistributionRequests] = useState<RedistributionRequest[]>(mockRedistributionRequests);
   const [laboratoryTests, setLaboratoryTests] = useState<LabTest[]>(mockLabTests);
   const [alerts, setAlerts] = useState<SystemAlert[]>(mockAlerts);
+  const [patients, setPatients] = useState<Patient[]>(mockPatients);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(mockActivityLogs);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { id: 'msg-1', sender: 'ai', text: 'Hello! I am your AI Operations Coordinator. How can I assist you with clinical flows, bed occupancy, or supply redistributions today?', timestamp: 'Just now' }
@@ -425,10 +463,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('Successfully deleted item from inventory', 'success');
   };
 
-  const assignShift = (doctorId: string, shift: Doctor['shift']) => {
+  const assignShift = (doctorId: string, shift: Doctor['shift'], department?: string) => {
     setDoctors(prev => prev.map(doc => {
       if (doc.id === doctorId) {
-        return { ...doc, shift };
+        return { ...doc, shift, specialty: department || doc.specialty };
       }
       return doc;
     }));
@@ -446,6 +484,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const registerPatient = (patient: any) => {
+    const newPatient: Patient = {
+      id: patient.id || `pat-${Date.now().toString().slice(-4)}`,
+      name: patient.name,
+      age: Number(patient.age) || 30,
+      gender: patient.gender || 'Male',
+      status: patient.status,
+      condition: patient.condition,
+      emergency: patient.emergency || false,
+      history: patient.history || '',
+      registeredAt: patient.registeredAt || 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      wardType: patient.wardType,
+      hospitalId: activeHospitalId,
+      timeline: patient.timeline || [
+        { title: 'Registered Node', desc: `Registered as ${patient.status}.`, date: 'Today' }
+      ]
+    };
+    setPatients(prev => [newPatient, ...prev]);
+
     const newLog: ActivityLog = {
       id: `log-${Date.now()}`,
       action: `Registered patient ${patient.name} (${patient.status} - Triage: ${patient.condition})`,
@@ -1057,6 +1113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       redistributionRequests,
       laboratoryTests,
       alerts,
+      patients,
       activityLogs,
       chatMessages,
       activeDistrictId,

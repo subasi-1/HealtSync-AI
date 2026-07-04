@@ -2,16 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApp } from '../context/AppContext';
 import { 
   HospitalService, InventoryService, BedService, 
-  DoctorService, LabService, RedistributionService 
+  DoctorService, LabService, RedistributionService,
+  PatientService, AlertsService, ReportsService, AIService
 } from '../services/api';
-import { Bed, Doctor, LabTest, RedistributionRequest } from '../types';
+import { Bed, Doctor, LabTest, RedistributionRequest, Patient, Alert } from '../types/index';
 
 export const useHospitalsQuery = (districtId?: string) => {
   const { hospitals } = useApp();
   return useQuery({
     queryKey: ['hospitals', districtId, hospitals],
     queryFn: async () => {
-      // If base URL exists, use API, otherwise fallback to context reactive state
       if (import.meta.env.VITE_API_BASE_URL) {
         return HospitalService.getAll(districtId);
       }
@@ -68,6 +68,21 @@ export const useDoctorsQuery = (hospitalId?: string) => {
   });
 };
 
+export const usePatientsQuery = (hospitalId?: string) => {
+  const { patients } = useApp();
+  return useQuery({
+    queryKey: ['patients', hospitalId, patients],
+    queryFn: async () => {
+      if (import.meta.env.VITE_API_BASE_URL) {
+        return PatientService.getAll(hospitalId);
+      }
+      return hospitalId
+        ? patients.filter(p => p.hospitalId === hospitalId)
+        : patients;
+    },
+  });
+};
+
 export const useRedistributionsQuery = () => {
   const { redistributionRequests } = useApp();
   return useQuery({
@@ -101,6 +116,9 @@ export const useAlertsQuery = (hospitalId?: string) => {
   return useQuery({
     queryKey: ['alerts', hospitalId, alerts],
     queryFn: async () => {
+      if (import.meta.env.VITE_API_BASE_URL) {
+        return AlertsService.getAll();
+      }
       return hospitalId
         ? alerts.filter(a => a.targetFacilityId === hospitalId)
         : alerts;
@@ -108,7 +126,7 @@ export const useAlertsQuery = (hospitalId?: string) => {
   });
 };
 
-// Mutations
+// Mutations with optimistic updates or cache invalidation loops
 export const useUpdateStockMutation = () => {
   const { updateInventoryStock } = useApp();
   const queryClient = useQueryClient();
@@ -161,6 +179,71 @@ export const useUpdateDoctorMutation = () => {
   });
 };
 
+export const useUpdateDoctorShiftMutation = () => {
+  const { assignShift } = useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ doctorId, shift, department }: { doctorId: string; shift: Doctor['shift']; department: string }) => {
+      await DoctorService.assignShift(doctorId, shift, department);
+      return { doctorId, shift, department };
+    },
+    onSuccess: (data) => {
+      assignShift(data.doctorId, data.shift, data.department);
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+    }
+  });
+};
+
+export const useRequestLeaveMutation = () => {
+  const { requestLeave } = useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ doctorId, isLeave }: { doctorId: string; isLeave: boolean }) => {
+      await DoctorService.requestLeave(doctorId, isLeave);
+      return { doctorId, isLeave };
+    },
+    onSuccess: (data) => {
+      requestLeave(data.doctorId, data.isLeave);
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
+    }
+  });
+};
+
+export const useRegisterPatientMutation = () => {
+  const { registerPatient } = useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (patient: Partial<Patient>) => {
+      return await PatientService.register(patient);
+    },
+    onSuccess: (data) => {
+      registerPatient(data);
+      queryClient.invalidateQueries({ queryKey: ['patients'] });
+      queryClient.invalidateQueries({ queryKey: ['beds'] });
+      queryClient.invalidateQueries({ queryKey: ['hospitals'] });
+    }
+  });
+};
+
+export const useUpdateCollectionStatusMutation = () => {
+  const { updateCollectionStatus } = useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ testId, status }: { testId: string; status: any }) => {
+      await LabService.updateStage(testId, status);
+      return { testId, status };
+    },
+    onSuccess: (data) => {
+      updateCollectionStatus(data.testId, data.status);
+      queryClient.invalidateQueries({ queryKey: ['labTests'] });
+    }
+  });
+};
+
 export const useRedistributionMutation = () => {
   const { createRedistributionRequest } = useApp();
   const queryClient = useQueryClient();
@@ -190,5 +273,21 @@ export const useApproveRedistributionMutation = () => {
       approveRedistribution(id);
       queryClient.invalidateQueries({ queryKey: ['redistributions'] });
     },
+  });
+};
+
+export const useAcknowledgeAlertMutation = () => {
+  const { acknowledgeAlert } = useApp();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await AlertsService.acknowledge(id);
+      return id;
+    },
+    onSuccess: (id) => {
+      acknowledgeAlert(id);
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+    }
   });
 };

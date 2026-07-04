@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ThemeToggle, Badge, Button } from '../common';
+import { ThemeToggle, Badge, Button, Modal } from '../common';
 import { 
   Bell, 
   MessageSquareCode, 
@@ -10,8 +10,15 @@ import {
   User, 
   LogOut, 
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Command,
+  Heart,
+  Pill,
+  Users,
+  BedDouble,
+  Building2
 } from 'lucide-react';
+import { cn } from '../../utils';
 
 interface NavbarProps {
   sidebarOpen: boolean;
@@ -19,9 +26,25 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) => {
-  const { currentUser, alerts, acknowledgeAlert, isChatOpen, setChatOpen, logout } = useApp();
+  const { 
+    currentUser, 
+    alerts, 
+    acknowledgeAlert, 
+    isChatOpen, 
+    setChatOpen, 
+    logout, 
+    addToast,
+    inventory,
+    doctors,
+    beds,
+    patients
+  } = useApp();
+
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const notificationRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -37,8 +60,21 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
         setShowProfile(false);
       }
     };
+    
+    // Add command+k keyboard shortcut for search portal (Accessibility & Power User)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+    };
+
     document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleAcknowledgeAlert = (id: string, e: React.MouseEvent) => {
@@ -51,6 +87,29 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
     navigate('/login');
   };
 
+  const handleResultClick = (targetPath: string, message: string) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    navigate(targetPath);
+    addToast(message, 'info');
+  };
+
+  // Global Search Filtering logic
+  const queryLower = searchQuery.toLowerCase().trim();
+  
+  const searchResults = {
+    medicines: queryLower ? inventory.filter(m => m.name.toLowerCase().includes(queryLower)).slice(0, 3) : [],
+    patients: queryLower ? patients.filter(p => p.name.toLowerCase().includes(queryLower)).slice(0, 3) : [],
+    doctors: queryLower ? doctors.filter(d => d.name.toLowerCase().includes(queryLower)).slice(0, 3) : [],
+    beds: queryLower ? beds.filter(b => b.roomNumber.toLowerCase().includes(queryLower) || b.wardType.toLowerCase().includes(queryLower)).slice(0, 3) : []
+  };
+
+  const hasResults = 
+    searchResults.medicines.length > 0 ||
+    searchResults.patients.length > 0 ||
+    searchResults.doctors.length > 0 ||
+    searchResults.beds.length > 0;
+
   return (
     <header className="sticky top-0 z-10 flex h-14 w-full items-center justify-between border-b border-border bg-card/85 backdrop-blur-md px-4 shadow-fluentSm">
       {/* Left side: Hamburger & Navigation breadcrumbs */}
@@ -58,12 +117,13 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground active:scale-95 md:hidden"
+          aria-label="Toggle Navigation Sidebar Menu"
         >
           <Menu className="h-5 w-5" />
         </button>
         
         {/* Dynamic Context Header */}
-        <div className="hidden items-center gap-1.5 text-sm md:flex">
+        <div className="hidden items-center gap-1.5 text-sm md:flex select-none">
           <span className="font-semibold text-foreground/80">Operations Command</span>
           <span className="text-muted-foreground">/</span>
           <span className="text-muted-foreground capitalize">
@@ -80,20 +140,27 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
           size="sm"
           onClick={() => setChatOpen(!isChatOpen)}
           className="h-9 px-3 gap-1.5 hover:fluent-shadow-md text-xs font-semibold"
+          aria-label="Open AI Operations Chat Assistant"
         >
           <Sparkles className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">AI Operations Chat</span>
         </Button>
 
-        {/* Global Search Bar (Visual Placeholder) */}
-        <div className="relative hidden w-48 lg:block xl:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground/60" />
-          <input
-            type="search"
-            placeholder="Search facility databases..."
-            className="h-9 w-full rounded-md border border-input bg-muted/20 pl-8 pr-3 text-xs focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring"
-          />
-        </div>
+        {/* Global Command-K Search Trigger */}
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="relative flex items-center justify-between h-9 w-48 border border-border bg-muted/20 hover:bg-muted/30 rounded-md pl-3 pr-2 text-[11px] text-muted-foreground transition-all duration-150 active:scale-98 select-none lg:w-56 xl:w-64"
+          aria-label="Open global databases search portal"
+          title="Press Ctrl+K to query"
+        >
+          <span className="flex items-center gap-1.5">
+            <Search className="h-3.5 w-3.5" />
+            <span>Search databases...</span>
+          </span>
+          <kbd className="hidden lg:flex h-5 items-center gap-0.5 rounded border border-border bg-muted/65 px-1 font-mono text-[9px] font-bold text-muted-foreground">
+            <Command className="h-2.5 w-2.5" />K
+          </kbd>
+        </button>
 
         {/* Theme Toggle */}
         <ThemeToggle />
@@ -106,6 +173,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative h-9 w-9 text-muted-foreground hover:text-foreground"
             title="System alerts ledger"
+            aria-label="View Active Alerts Center notifications"
           >
             <Bell className="h-5 w-5" />
             {activeAlerts.length > 0 && (
@@ -124,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
                 </span>
                 {activeAlerts.length > 0 && (
                   <button
-                    onClick={() => navigate('/alerts')}
+                    onClick={() => { setShowNotifications(false); navigate('/alerts'); }}
                     className="text-[10px] font-semibold text-primary hover:underline"
                   >
                     View All
@@ -185,6 +253,7 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
           <button
             onClick={() => setShowProfile(!showProfile)}
             className="flex items-center gap-2 hover:opacity-90 active:scale-[0.98]"
+            aria-label="Open User Profile Panel"
           >
             <img
               src={currentUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=admin'}
@@ -231,6 +300,134 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
           )}
         </div>
       </div>
+
+      {/* Global Search Command Overlay Modal */}
+      <Modal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        title="Global Clinical Database Search"
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+            <input
+              type="text"
+              autoFocus
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Type medicine name, patient name, doctor specialty..."
+              className="h-10 w-full rounded-md border border-input bg-muted/20 pl-9 pr-3 text-xs focus:bg-background focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring font-semibold text-foreground"
+            />
+          </div>
+
+          <div className="max-h-[300px] overflow-y-auto space-y-3 pr-1 divide-y divide-border/40 select-none">
+            {!searchQuery && (
+              <p className="text-xs text-muted-foreground text-center py-6 font-medium leading-normal">
+                Begin typing to scan drug inventory batches, clinical TIMELINE records, shift rosters, and bed counts.
+              </p>
+            )}
+
+            {searchQuery && !hasResults && (
+              <p className="text-xs text-muted-foreground text-center py-6 font-semibold">
+                No matching telemetry records found.
+              </p>
+            )}
+
+            {/* Medicines matched */}
+            {searchResults.medicines.length > 0 && (
+              <div className="pt-2.5 first:pt-0">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                  Medicine Inventory
+                </span>
+                <div className="space-y-1">
+                  {searchResults.medicines.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleResultClick('/inventory', `Viewing stock details for ${item.name}`)}
+                      className="flex w-full items-center justify-between rounded p-2 text-left hover:bg-primary/5 text-xs text-foreground font-semibold"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Pill className="h-3.5 w-3.5 text-primary" /> {item.name}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Qty: {item.stockLevel} • Batch: {item.batchNumber}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Patients matched */}
+            {searchResults.patients.length > 0 && (
+              <div className="pt-2.5">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                  Registered Patients
+                </span>
+                <div className="space-y-1">
+                  {searchResults.patients.map((pat) => (
+                    <button
+                      key={pat.id}
+                      onClick={() => handleResultClick('/patients', `Viewing clinical record for ${pat.name}`)}
+                      className="flex w-full items-center justify-between rounded p-2 text-left hover:bg-primary/5 text-xs text-foreground font-semibold"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Heart className="h-3.5 w-3.5 text-primary" /> {pat.name} ({pat.status})
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">Age: {pat.age} • Triage: {pat.condition}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Doctors matched */}
+            {searchResults.doctors.length > 0 && (
+              <div className="pt-2.5">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                  Shift Doctors Directory
+                </span>
+                <div className="space-y-1">
+                  {searchResults.doctors.map((doc) => (
+                    <button
+                      key={doc.id}
+                      onClick={() => handleResultClick('/doctors', `Viewing availability for ${doc.name}`)}
+                      className="flex w-full items-center justify-between rounded p-2 text-left hover:bg-primary/5 text-xs text-foreground font-semibold"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-primary" /> {doc.name}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{doc.specialty} • Roster: {doc.status}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Beds matched */}
+            {searchResults.beds.length > 0 && (
+              <div className="pt-2.5">
+                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest block mb-1">
+                  Observed Beds Census
+                </span>
+                <div className="space-y-1">
+                  {searchResults.beds.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => handleResultClick('/beds', `Viewing occupancy layout for Bed ${b.roomNumber}`)}
+                      className="flex w-full items-center justify-between rounded p-2 text-left hover:bg-primary/5 text-xs text-foreground font-semibold"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <BedDouble className="h-3.5 w-3.5 text-primary" /> Room: {b.roomNumber} ({b.wardType})
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">{b.status} {b.patientName ? `• ${b.patientName}` : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 };
+export default Navbar;
