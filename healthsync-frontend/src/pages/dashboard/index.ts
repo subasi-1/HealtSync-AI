@@ -1,3 +1,3 @@
-// Placeholder for src/pages/dashboard
-export {};
-
+export * from './SuperAdminDashboard';
+export * from './DistrictAdminDashboard';
+export * from './HospitalAdminDashboard';

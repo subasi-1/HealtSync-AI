@@ -1,8 +1,0 @@
-com\healthsync\bed\BedManagementTests.class
-com\healthsync\HealthSyncApplicationTests.class
-com\healthsync\laboratory\LabAndNotificationTests.class
-com\healthsync\dashboard\DashboardTests.class
-com\healthsync\monitoring\HealthTests.class
-com\healthsync\ai\AiDecisionEngineTests.class
-com\healthsync\auth\AuthenticationControllerTests.class
-com\healthsync\patient\PatientAndVisitTests.class

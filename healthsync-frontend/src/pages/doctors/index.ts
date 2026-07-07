@@ -1,3 +1,2 @@
-// Placeholder for src/pages/doctors
-export {};
-
+export * from './index.tsx';
+export { DoctorAttendance as default } from './index.tsx';

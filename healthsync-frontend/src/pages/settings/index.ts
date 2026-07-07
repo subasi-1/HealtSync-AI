@@ -1,3 +1,2 @@
-// Placeholder for src/pages/settings
-export {};
-
+export * from './index.tsx';
+export { Settings as default } from './index.tsx';

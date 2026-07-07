@@ -1,3 +1,2 @@
-// Placeholder for src/routes
-export {};
-
+export * from './index.tsx';
+export { AppRoutes as default } from './index.tsx';

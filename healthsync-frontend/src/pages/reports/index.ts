@@ -1,3 +1,2 @@
-// Placeholder for src/pages/reports
-export {};
-
+export * from './index.tsx';
+export { Reports as default } from './index.tsx';

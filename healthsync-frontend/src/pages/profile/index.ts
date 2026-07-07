@@ -1,3 +1,2 @@
-// Placeholder for src/pages/profile
-export {};
-
+export * from './index.tsx';
+export { UserProfile as default } from './index.tsx';

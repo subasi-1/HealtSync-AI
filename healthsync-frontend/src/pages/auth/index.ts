@@ -1,3 +1,3 @@
-// Placeholder for src/pages/auth
-export {};
-
+export * from './Login';
+export * from './Register';
+export * from './ForgotPassword';

@@ -1,3 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 33% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 217 91% 56%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 89%;
+    --ring: 217 91% 56%;
+
+    --radius: 0.75rem;
+
+    /* Healthcare specific palettes */
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 355.7 100% 97.3%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 89%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 200 100% 95%;
+
+    --epidemic: 271 76% 53%;
+    --epidemic-foreground: 270 100% 98%;
+
+    /* Glassmorphism settings */
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(226, 232, 240, 0.8);
+    --glass-blur: 16px;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 47.4% 7.5%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 47.4% 7.5%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 222.2 47.4% 11.2%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 223 47% 11%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 223 47% 12%;
+    --input: 223 47% 14%;
+    --ring: 217.2 91.2% 59.8%;
+
+    /* Healthcare specific palettes */
+    --success: 142.1 70.6% 45.3%;
+    --success-foreground: 144 100% 96%;
+    
+    --warning: 48 96% 53%;
+    --warning-foreground: 222.2 47.4% 11.2%;
+    
+    --info: 201 94% 58%;
+    --info-foreground: 222.2 47.4% 11.2%;
+
+    --epidemic: 271 91% 65%;
+    --epidemic-foreground: 222.2 47.4% 11.2%;
+
+    /* Glassmorphism settings */
+    --glass-bg: rgba(15, 23, 42, 0.65);
+    --glass-border: rgba(30, 41, 59, 0.8);
+    --glass-blur: 16px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom design system styling - Fluent + Google Cloud */
+
+@layer utilities {
+  .acrylic {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+  }
+  
+  .fluent-shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .fluent-shadow-md {
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.04), 0 1px 4px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .fluent-shadow-lg {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08), 0 2px 8px 0 rgba(0, 0, 0, 0.04);
+  }
+
+  .fluent-shadow-xl {
+    box-shadow: 0 20px 48px 0 rgba(0, 0, 0, 0.12), 0 8px 16px 0 rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full transition-colors hover:bg-muted-foreground/30;
+}
+
+/* Page transit animations */
+.page-fade-enter {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.page-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 250ms ease-out, transform 250ms ease-out;
+}
+
+/* Leaflet map styles */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  z-index: 1;
+}
+
+/* Shimmer load effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-anim {
+  background: linear-gradient(90deg, var(--glass-bg) 25%, var(--glass-border) 50%, var(--glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* High Contrast Mode overrides (WCAG 2.1 AAA Compliance) */
+.high-contrast {
+  --background: 0 0% 100% !important;
+  --foreground: 0 0% 0% !important;
+  --border: 0 0% 0% !important;
+  --primary: 240 100% 50% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --card: 0 0% 100% !important;
+  --card-foreground: 0 0% 0% !important;
+  --muted: 0 0% 90% !important;
+  --muted-foreground: 0 0% 10% !important;
+}
+
+.high-contrast.dark {
+  --background: 0 0% 0% !important;
+  --foreground: 0 0% 100% !important;
+  --border: 0 0% 100% !important;
+  --primary: 180 100% 50% !important;
+  --primary-foreground: 0 0% 0% !important;
+  --card: 0 0% 0% !important;
+  --card-foreground: 0 0% 100% !important;
+  --muted: 0 0% 15% !important;
+  --muted-foreground: 0 0% 90% !important;
+}
+
+.high-contrast * {
+  border-color: currentColor !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}

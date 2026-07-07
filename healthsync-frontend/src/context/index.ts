@@ -1,3 +1,1 @@
-// Placeholder for src/context
-export {};
-
+export * from './AppContext';

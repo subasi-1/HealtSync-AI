@@ -1,3 +1,2 @@
-// Placeholder for src/pages/inventory
-export {};
-
+export * from './index.tsx';
+export { MedicineInventory as default } from './index.tsx';

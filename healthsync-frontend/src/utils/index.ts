@@ -1,3 +1,1 @@
-// Placeholder for src/utils
-export {};
-
+export * from './tailwind-utils';
