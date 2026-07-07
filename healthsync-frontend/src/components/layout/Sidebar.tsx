@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../utils';
@@ -71,27 +71,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   return (
     <aside
       className={cn(
-        'relative z-20 flex flex-col border-r border-border bg-card text-card-foreground transition-all duration-300 shadow-fluentSm',
+        'relative z-20 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-fluentSm',
         isOpen ? 'w-64' : 'w-16'
       )}
     >
       {/* Brand Section */}
-      <div className="flex h-14 items-center justify-between border-b border-border px-4">
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4 transition-colors duration-300 ease-in-out">
+        <div className="flex items-center overflow-hidden">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-active text-white transition-colors duration-300 ease-in-out">
             <Activity className="h-4.5 w-4.5" />
           </div>
-          {isOpen && (
-            <span className="text-sm font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              HealthSync AI
-            </span>
-          )}
+          <span className={cn(
+            "text-sm font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent transition-all duration-300 ease-in-out whitespace-nowrap",
+            isOpen ? "opacity-100 max-w-[150px] ml-2.5" : "opacity-0 max-w-0 overflow-hidden ml-0 pointer-events-none"
+          )}>
+            HealthSync AI
+          </span>
         </div>
         
         {/* Toggle Collapse Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-fluentSm hover:text-foreground active:scale-95"
+          className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/80 shadow-fluentSm hover:text-sidebar-active hover:bg-sidebar-hover transition-all duration-300 ease-in-out active:scale-95"
         >
           {isOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </button>
@@ -99,14 +100,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
       {/* Tenant Indicator */}
       {isOpen && (
-        <div className="mx-4 mt-4 rounded-md bg-muted/30 border border-border/50 p-2.5">
+        <div className="mx-4 mt-4 rounded-md bg-sidebar-hover/40 border border-sidebar-border p-2.5 transition-all duration-300 ease-in-out">
           <div className="flex items-center gap-2 text-xs">
-            <Hospital className="h-3.5 w-3.5 text-primary" />
+            <Hospital className="h-3.5 w-3.5 text-sidebar-active transition-colors duration-300" />
             <div className="overflow-hidden">
-              <p className="font-semibold text-foreground/80 leading-none truncate">
+              <p className="font-semibold text-sidebar-foreground leading-none truncate">
                 {currentUser.facilityName || 'District HQ Office'}
               </p>
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+              <span className="text-[10px] text-sidebar-foreground/60 uppercase font-bold tracking-wider">
                 {currentUser.role.replace('_', ' ')}
               </span>
             </div>
@@ -118,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto">
         <div>
           <span className={cn(
-            "block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-2 px-1",
+            "block text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 mb-2 px-1 transition-colors duration-300",
             !isOpen && "sr-only"
           )}>
             Core Dashboard
@@ -132,20 +133,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   to={link.to}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all group relative',
+                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out group relative',
                       isActive
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                        ? 'bg-sidebar-active/15 text-sidebar-active font-semibold'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-hover hover:text-sidebar-foreground'
                     )
                   }
                 >
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-primary" />
+                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-sidebar-active" />
                       )}
-                      <Icon className={cn('h-4 w-4 shrink-0 transition-transform group-hover:scale-105', isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
-                      {isOpen && <span>{link.label}</span>}
+                      <Icon className={cn('h-4 w-4 shrink-0 transition-all duration-300 group-hover:scale-105', isActive ? 'text-sidebar-active' : 'text-sidebar-foreground/65 group-hover:text-sidebar-foreground')} />
+                      {isOpen && <span className="transition-colors duration-300">{link.label}</span>}
                     </>
                   )}
                 </NavLink>
@@ -154,9 +155,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border/50">
+        <div className="pt-4 border-t border-sidebar-border/50 transition-colors duration-300">
           <span className={cn(
-            "block text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 mb-2 px-1",
+            "block text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/40 mb-2 px-1 transition-colors duration-300",
             !isOpen && "sr-only"
           )}>
             Global Operations
@@ -170,20 +171,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                   to={link.to}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all group relative',
+                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out group relative',
                       isActive
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                        ? 'bg-sidebar-active/15 text-sidebar-active font-semibold'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-hover hover:text-sidebar-foreground'
                     )
                   }
                 >
                   {({ isActive }) => (
                     <>
                       {isActive && (
-                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-primary" />
+                        <div className="absolute left-0 top-2 bottom-2 w-1 rounded-r-md bg-sidebar-active" />
                       )}
-                      <Icon className={cn('h-4 w-4 shrink-0 transition-transform group-hover:scale-105', isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
-                      {isOpen && <span className="flex-1 truncate">{link.label}</span>}
+                      <Icon className={cn('h-4 w-4 shrink-0 transition-all duration-300 group-hover:scale-105', isActive ? 'text-sidebar-active' : 'text-sidebar-foreground/65 group-hover:text-sidebar-foreground')} />
+                      {isOpen && <span className="flex-1 truncate transition-colors duration-300">{link.label}</span>}
                     </>
                   )}
                 </NavLink>
@@ -194,38 +195,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       </nav>
 
       {/* Footer Section */}
-      <div className="border-t border-border p-3 space-y-1">
+      <div className="border-t border-sidebar-border p-3 space-y-1 transition-colors duration-300">
         <NavLink
           to="/profile"
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              isActive && 'bg-primary/10 text-primary font-semibold'
+              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out text-sidebar-foreground/70 hover:bg-sidebar-hover hover:text-sidebar-foreground',
+              isActive && 'bg-sidebar-active/15 text-sidebar-active font-semibold'
             )}
         >
-          <User className="h-4 w-4 shrink-0" />
+          <User className="h-4 w-4 shrink-0 transition-colors duration-300" />
           {isOpen && <span>My Profile</span>}
         </NavLink>
         <NavLink
           to="/settings"
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all text-muted-foreground hover:bg-muted/40 hover:text-foreground',
-              isActive && 'bg-primary/10 text-primary font-semibold'
+              'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-in-out text-sidebar-foreground/70 hover:bg-sidebar-hover hover:text-sidebar-foreground',
+              isActive && 'bg-sidebar-active/15 text-sidebar-active font-semibold'
             )}
         >
-          <Settings className="h-4 w-4 shrink-0" />
+          <Settings className="h-4 w-4 shrink-0 transition-colors duration-300" />
           {isOpen && <span>Settings</span>}
         </NavLink>
         
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-all active:scale-95"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-all duration-300 ease-in-out active:scale-95"
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0 transition-colors duration-300" />
           {isOpen && <span>Logout</span>}
         </button>
       </div>
     </aside>
   );
 };
+export default Sidebar;

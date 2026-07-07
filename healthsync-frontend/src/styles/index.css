@@ -54,6 +54,14 @@
     --glass-bg: rgba(255, 255, 255, 0.65);
     --glass-border: rgba(226, 232, 240, 0.8);
     --glass-blur: 16px;
+
+    /* Sidebar Design Tokens (Light Mode: Professional white/light gray sidebar) */
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 215.4 16.3% 46.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-hover: 210 40% 95%;
+    --sidebar-active: 217 91% 56%;
+    --sidebar-active-foreground: 210 40% 98%;
   }
 
   .dark {
@@ -102,6 +110,14 @@
     --glass-bg: rgba(15, 23, 42, 0.65);
     --glass-border: rgba(30, 41, 59, 0.8);
     --glass-blur: 16px;
+
+    /* Sidebar Design Tokens (Dark Mode: Professional navy/charcoal sidebar) */
+    --sidebar-background: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 215 20.2% 65.1%;
+    --sidebar-border: 223 47% 16%;
+    --sidebar-hover: 223 47% 18%;
+    --sidebar-active: 217.2 91.2% 59.8%;
+    --sidebar-active-foreground: 222.2 47.4% 11.2%;
   }
 }
 
@@ -110,9 +126,16 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Smooth color transitions for theme switching on structural elements */
+  aside, header, main, input, select, button, tr, td, th {
+    transition-property: background-color, border-color, text-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 250ms;
   }
 }
 
