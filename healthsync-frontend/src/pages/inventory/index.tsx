@@ -240,9 +240,9 @@ export const MedicineInventory: React.FC = () => {
         const daysToExpiry = Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 3600 * 24));
         const isExpiring = daysToExpiry < 90;
         return (
-          <span className={`text-xs font-semibold ${isExpiring ? 'text-destructive' : 'text-slate-400'}`}>
-            {isExpiring ? `Expiring in ${daysToExpiry}d` : row.expiryDate}
-          </span>
+          <Badge variant={isExpiring ? 'destructive' : 'outline'} className={isExpiring ? 'animate-pulse' : ''}>
+            {isExpiring ? `Expiring: ${daysToExpiry}d` : row.expiryDate}
+          </Badge>
         );
       }
     },
@@ -469,6 +469,60 @@ export const MedicineInventory: React.FC = () => {
               </div>
             )}
           </Card>
+
+          {selectedItem && (
+            <Card className="p-4 space-y-3 animate-fade-in">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                Batch Registry History
+              </span>
+              <div className="space-y-2 text-[11px] leading-relaxed">
+                <div className="flex justify-between border-b border-border/40 pb-1.5 font-bold text-foreground/80">
+                  <span>Batch ID</span>
+                  <span>Quantity</span>
+                  <span>Status</span>
+                </div>
+                <div className="flex justify-between border-b border-border/40 pb-1.5">
+                  <span className="font-mono text-primary font-bold">{selectedItem.batchNumber}</span>
+                  <span className="font-bold text-foreground">{selectedItem.stockLevel} {selectedItem.unit}</span>
+                  <Badge variant="success">Active</Badge>
+                </div>
+                <div className="flex justify-between border-b border-border/40 pb-1.5 text-muted-foreground">
+                  <span className="font-mono">BAT-REF-094</span>
+                  <span>100 {selectedItem.unit}</span>
+                  <Badge variant="outline">Distributed</Badge>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span className="font-mono">BAT-REF-012</span>
+                  <span>250 {selectedItem.unit}</span>
+                  <Badge variant="outline">Expired</Badge>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {selectedItem && (
+            <Card className="p-4 space-y-3 animate-fade-in">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                Stock Transaction Timeline
+              </span>
+              <div className="relative pl-4 border-l border-border/80 ml-2 space-y-4 text-[11px] leading-relaxed">
+                <div className="relative">
+                  <span className="absolute -left-5 top-1 h-2 w-2 rounded-full bg-success ring-4 ring-background" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-foreground">Dispensed 10 {selectedItem.unit}</span>
+                    <span className="text-[9px] text-muted-foreground mt-0.5">Today, 10:15 AM • OPD Pharmacy Desk</span>
+                  </div>
+                </div>
+                <div className="relative text-muted-foreground">
+                  <span className="absolute -left-5 top-1 h-2 w-2 rounded-full bg-primary ring-4 ring-background" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-foreground/80">Stock Received Refill</span>
+                    <span className="text-[9px] text-muted-foreground mt-0.5">Yesterday, 02:00 PM • Novartis Pharma</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 

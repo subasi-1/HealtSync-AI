@@ -34,6 +34,13 @@ export const DoctorAttendance: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [previewDoctor, setPreviewDoctor] = useState<Doctor | null>(null);
+
+  React.useEffect(() => {
+    if (doctors.length > 0 && !previewDoctor) {
+      setPreviewDoctor(doctors[0]);
+    }
+  }, [doctors]);
   
   // Modals
   const [isRosterModalOpen, setIsRosterModalOpen] = useState(false);
@@ -261,6 +268,7 @@ export const DoctorAttendance: React.FC = () => {
               columns={columns}
               data={filteredDoctors}
               isLoading={isLoading}
+              onRowClick={(row) => setPreviewDoctor(row)}
               emptyMessage="No medical officers matched search queries."
             />
           </Card>
@@ -268,6 +276,86 @@ export const DoctorAttendance: React.FC = () => {
 
         {/* Specialty distribution bar chart */}
         <div className="space-y-6">
+          {previewDoctor && (
+            <Card className="p-4 space-y-3.5 animate-fade-in">
+              <div className="flex items-center gap-3">
+                <img
+                  src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(previewDoctor.name)}`}
+                  alt={previewDoctor.name}
+                  className="h-12 w-12 rounded-md bg-muted p-1"
+                />
+                <div>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                    {(previewDoctor as any).department || 'General Medicine'}
+                  </span>
+                  <h3 className="text-xs font-bold text-foreground mt-0.5">
+                    {previewDoctor.name}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase">{previewDoctor.specialty}</p>
+                </div>
+              </div>
+
+              <div className="text-xs space-y-2 border-t border-border/40 pt-3">
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Contact:</span>
+                  <span className="font-semibold text-foreground">+91 9845 {previewDoctor.id.slice(-4)}</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground flex items-center gap-1"><Star className="h-3 w-3" /> Efficiency:</span>
+                  <span className="font-bold text-primary">{previewDoctor.attendanceRate}% rating</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {previewDoctor && (
+            <Card className="p-4 space-y-3 animate-fade-in">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                Shift calendar
+              </span>
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold">
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                  const isWeekend = idx >= 5;
+                  const shiftName = isWeekend ? 'Off' : (previewDoctor as any).shift || 'Gen';
+                  return (
+                    <div key={idx} className="flex flex-col items-center">
+                      <span className="text-muted-foreground mb-1 block">{day}</span>
+                      <Badge variant={isWeekend ? 'outline' : 'success'} className="px-1 text-[8px] h-6 flex items-center justify-center font-bold">
+                        {shiftName.slice(0, 3)}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {previewDoctor && (
+            <Card className="p-4 space-y-3 animate-fade-in">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none block">
+                Attendance logs (Last 4 Days)
+              </span>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                  <span className="text-muted-foreground">July 05, 2026:</span>
+                  <span className="font-bold text-success flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5" /> Present</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-border/40 pb-1.5">
+                  <span className="text-muted-foreground">July 04, 2026:</span>
+                  <span className="font-bold text-success flex items-center gap-1"><CheckCircle className="h-3.5 w-3.5" /> Present</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-border/40 pb-1.5 text-muted-foreground">
+                  <span>July 03, 2026:</span>
+                  <span className="font-bold">Excused Leave</span>
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span>July 02, 2026:</span>
+                  <span className="font-bold">Excused Leave</span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="p-4">
             <div>
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">

@@ -397,6 +397,27 @@ export const PatientFootfall: React.FC = () => {
                       ))}
                     </div>
                   </div>
+
+                  {/* Visit History */}
+                  <div>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">Historical Clinical Visits:</span>
+                    <div className="space-y-2 text-[11px] leading-relaxed">
+                      <div className="p-2 bg-muted/40 rounded border border-border/40">
+                        <div className="flex justify-between items-center font-bold">
+                          <span>General OPD Desk</span>
+                          <span className="text-muted-foreground font-normal text-[9px]">June 12, 2026</span>
+                        </div>
+                        <p className="text-muted-foreground mt-0.5">Complained of acute migraine. Administered Ibuprofen and advised 24h rest schedule.</p>
+                      </div>
+                      <div className="p-2 bg-muted/40 rounded border border-border/40">
+                        <div className="flex justify-between items-center font-bold">
+                          <span>Diagnostics Lab Desk</span>
+                          <span className="text-muted-foreground font-normal text-[9px]">May 05, 2026</span>
+                        </div>
+                        <p className="text-muted-foreground mt-0.5">Routine CBC blood counts and sugar profiles. Checked normal within bounds.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Card>
