@@ -1,0 +1,8 @@
+pandas
+numpy
+matplotlib
+python-dotenv
+sqlalchemy
+psycopg2-binary
+fastapi
+uvicorn

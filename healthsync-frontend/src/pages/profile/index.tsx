@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button, Input, Table, Modal } from '../../components/common';
 import { 
@@ -30,6 +30,10 @@ interface DocumentFile {
 }
 
 export const UserProfile: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Profile";
+  }, []);
+
   const { currentUser, activityLogs, addToast } = useApp();
   const [activeTab, setActiveTab] = useState<'profile' | 'audit'>('profile');
   const [isSaved, setIsSaved] = useState(false);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button, Table } from '../../components/common';
 import { 
@@ -26,6 +26,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 export const HospitalAdminDashboard: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Dashboard";
+  }, []);
+
   const { currentUser, activeHospitalId, hospitals, acknowledgeAlert } = useApp();
   const navigate = useNavigate();
 

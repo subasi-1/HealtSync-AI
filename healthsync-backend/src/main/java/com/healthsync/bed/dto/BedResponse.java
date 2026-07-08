@@ -14,5 +14,6 @@ public record BedResponse(
     String maintenanceStatus,
     UUID wardId,
     String wardName,
-    String wardCode
+    String wardCode,
+    UUID hospitalId
 ) {}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button, Table, Modal, Select, Input } from '../../components/common';
 import { useDoctorsQuery } from '../../hooks';
@@ -22,6 +22,10 @@ import {
 } from 'recharts';
 
 export const DoctorAttendance: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Doctors";
+  }, []);
+
   const { 
     activeHospitalId, 
     assignShift, 

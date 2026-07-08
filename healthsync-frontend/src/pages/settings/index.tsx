@@ -32,6 +32,10 @@ import {
 } from 'recharts';
 
 export const Settings: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Settings";
+  }, []);
+
   const { theme, toggleTheme, addToast, seedDemoData } = useApp();
   const [activeTab, setActiveTab] = useState<'thresholds' | 'alerts' | 'ai' | 'accessibility' | 'language' | 'monitoring' | 'security' | 'disaster' | 'intelligence'>('thresholds');
   const [isSaved, setIsSaved] = useState(false);

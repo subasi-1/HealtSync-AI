@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Card, Button, Input, Select } from '../../components/common';
-import { Activity, ShieldCheck, ArrowLeft, Hospital } from 'lucide-react';
+import { Card, Button, Input, Select, Logo } from '../../components/common';
+import { ShieldCheck, ArrowLeft, Hospital, Eye, EyeOff } from 'lucide-react';
+import { AuthService } from '../../services/api';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -11,9 +12,17 @@ export const Register: React.FC = () => {
   const [facilityType, setFacilityType] = useState('PHC');
   const [district, setDistrict] = useState('District-A (Central)');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [license, setLicense] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    document.title = "HealthSync AI | Register";
+  }, []);
 
   const facilityTypes = [
     { value: 'PHC', label: 'Primary Health Center (PHC)' },
@@ -28,13 +37,53 @@ export const Register: React.FC = () => {
     { value: 'District-C (West)', label: 'District-C (West Operations)' }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const getPasswordStrength = (pass: string) => {
+    if (!pass) return { label: '', color: 'bg-transparent', width: 'w-0', textClass: 'text-muted-foreground' };
+    if (pass.length < 5) return { label: 'Weak', color: 'bg-destructive', width: 'w-1/3', textClass: 'text-destructive' };
+    if (pass.length < 8) return { label: 'Medium', color: 'bg-warning', width: 'w-2/3', textClass: 'text-warning' };
+    return { label: 'Strong', color: 'bg-success', width: 'w-full', textClass: 'text-success' };
+  };
+
+  const strength = getPasswordStrength(password);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!agreeTerms) {
+      setError("You must agree to the Terms & Conditions.");
+      return;
+    }
+
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await AuthService.register({
+        fullName: name,
+        email,
+        username: email.split('@')[0],
+        password,
+        role: 'HOSPITAL_ADMIN',
+        facilityName,
+        facilityType,
+        district,
+        licenseNumber: license
+      });
       setIsSubmitted(true);
-    }, 1200);
+      setTimeout(() => {
+        navigate('/login', { replace: true });
+      }, 2000);
+    } catch (err: any) {
+      console.error("Register API error: ", err);
+      const errMsg = err.response?.data?.message || err.message || 'Registration failed. Try again.';
+      setError(errMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,33 +95,36 @@ export const Register: React.FC = () => {
 
       <div className="relative z-10 w-full max-w-lg space-y-6">
         <div className="text-center">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Activity className="h-6 w-6" />
-          </div>
+          <Link to="/" className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+            <Logo size={24} className="text-white" />
+          </Link>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
             Enroll Health Facility
           </h1>
           <p className="mt-1.5 text-xs text-muted-foreground uppercase font-bold tracking-wider">
-            HealthSync SaaS Registry Portal
+            AI-Driven Health Center &amp; Supply Chain Management
           </p>
         </div>
 
         <Card variant="acrylic" className="p-6 md:p-8">
           {isSubmitted ? (
             <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                <Hospital className="h-6 w-6" />
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success animate-bounce">
+                <ShieldCheck className="h-6 w-6" />
               </div>
-              <p className="text-base font-bold text-foreground">Registration Request Received</p>
+              <p className="text-base font-bold text-foreground">Registration Successful</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                The license `{license}` has been queued for verification. A District Officer will audit the facility details before activating the tenant sandbox.
+                Your account has been enrolled. Redirecting to operational login...
               </p>
-              <Link to="/login" className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                <ArrowLeft className="h-3.5 w-3.5" /> Return to Login
-              </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+                  {error}
+                </div>
+              )}
+
               <p className="text-xs text-muted-foreground leading-relaxed mb-1">
                 Register a new clinical node under state command. System accounts will remain locked until verified by an active District Supervisor.
               </p>
@@ -127,14 +179,60 @@ export const Register: React.FC = () => {
                 />
               </div>
 
-              <Input
-                label="Choose Operations Password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="relative">
+                  <Input
+                    label="Operations Password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 bottom-2.5 text-muted-foreground hover:text-foreground focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <Input
+                  label="Confirm Password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Password Strength Indicator */}
+              {password && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-muted-foreground">Password Strength:</span>
+                    <span className={strength.textClass}>{strength.label}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div className={`h-full ${strength.color} ${strength.width} transition-all duration-300`} />
+                  </div>
+                </div>
+              )}
+
+              {/* Terms and Conditions */}
+              <div className="flex items-start gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
+                  className="mt-0.5 rounded border-border text-primary focus:ring-primary/20"
+                />
+                <label htmlFor="terms" className="text-xs text-muted-foreground leading-normal select-none cursor-pointer">
+                  I agree to the HealthSync operations ledger protocols, data sovereignty compliance clauses, and security terms.
+                </label>
+              </div>
 
               <Button
                 type="submit"
@@ -144,9 +242,10 @@ export const Register: React.FC = () => {
                 Enroll Hospital Node
               </Button>
 
-              <div className="text-center pt-1.5">
-                <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Authorization Console
+              <div className="text-center pt-2 text-xs text-muted-foreground">
+                Already have an account?{' '}
+                <Link to="/login" className="font-bold text-primary hover:underline">
+                  Login
                 </Link>
               </div>
             </form>
@@ -156,3 +255,4 @@ export const Register: React.FC = () => {
     </div>
   );
 };
+export default Register;

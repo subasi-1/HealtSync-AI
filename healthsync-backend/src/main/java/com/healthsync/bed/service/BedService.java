@@ -113,7 +113,8 @@ public class BedService {
                 bed.getMaintenanceStatus(),
                 bed.getWard().getId(),
                 bed.getWard().getName(),
-                bed.getWard().getCode()
+                bed.getWard().getCode(),
+                bed.getWard().getHealthCenter().getId()
         );
     }
 }

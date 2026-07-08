@@ -4,6 +4,17 @@ import {
   PatientFootfall, LabTest, RedistributionRequest, 
   SystemAlert, ActivityLog, ChatMessage, Role, Toast, Patient
 } from '../types';
+import { 
+  AuthService, 
+  HospitalService, 
+  InventoryService, 
+  BedService, 
+  DoctorService, 
+  AlertsService, 
+  LabService, 
+  RedistributionService, 
+  PatientService 
+} from '../services/api';
 
 interface AppContextType {
   currentUser: User | null;
@@ -30,7 +41,7 @@ interface AppContextType {
   assignShift: (doctorId: string, shift: Doctor['shift'], department?: string) => void;
   requestLeave: (doctorId: string, isLeave: boolean) => void;
   registerPatient: (patient: any) => void;
-  login: (email: string, role: Role, facilityId?: string) => Promise<boolean>;
+  login: (emailOrUsername: string, password: string, role: Role, facilityId?: string) => Promise<boolean>;
   logout: () => void;
   toggleTheme: () => void;
   setActiveHospitalId: (id: string) => void;
@@ -379,7 +390,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const token = localStorage.getItem('healthsync_access_token');
     const saved = localStorage.getItem('hs-user');
+    if (!token) {
+      localStorage.removeItem('hs-user');
+      return null;
+    }
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -418,6 +434,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [currentUser]);
 
+  const syncDataWithBackend = async () => {
+    if (!import.meta.env.VITE_API_BASE_URL) return;
+    try {
+      const [hospList, invList, bedList, docList, alertsList, labList, redistList, patList] = await Promise.all([
+        HospitalService.getAll(),
+        InventoryService.getAll(),
+        BedService.getAll(),
+        DoctorService.getAll(),
+        AlertsService.getAll(),
+        LabService.getAll(),
+        RedistributionService.getAll().catch(() => []),
+        PatientService.getAll().catch(() => [])
+      ]);
+
+      if (hospList && hospList.length > 0) setHospitals(hospList);
+      if (invList && invList.length > 0) setInventory(invList);
+      if (bedList && bedList.length > 0) setBeds(bedList);
+      if (docList && docList.length > 0) setDoctors(docList);
+      if (alertsList && alertsList.length > 0) setAlerts(alertsList);
+      if (labList && labList.length > 0) setLaboratoryTests(labList);
+      if (redistList && redistList.length > 0) setRedistributionRequests(redistList);
+      if (patList && patList.length > 0) setPatients(patList);
+    } catch (e) {
+      console.error('Error synchronizing context state with backend:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      syncDataWithBackend();
+    }
+  }, [currentUser, activeHospitalId]);
+
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   const addToast = (message: string, type: 'success' | 'error' | 'info') => {
@@ -445,7 +494,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast(`Successfully added medicine: ${item.name}`, 'success');
   };
 
-  const editMedicine = (id: string, updates: any) => {
+  const editMedicine = async (id: string, updates: any) => {
+    if (updates.stockLevel !== undefined && import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await InventoryService.updateStock(id, updates.stockLevel);
+      } catch (e) {
+        console.error('Failed to update stock in backend:', e);
+      }
+    }
     setInventory(prev => prev.map(item => {
       if (item.id === id) {
         const nextStock = updates.stockLevel !== undefined ? updates.stockLevel : item.stockLevel;
@@ -459,6 +515,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return item;
     }));
     addToast('Successfully updated medicine ledger', 'success');
+    syncDataWithBackend();
   };
 
   const deleteMedicine = (id: string) => {
@@ -466,7 +523,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('Successfully deleted item from inventory', 'success');
   };
 
-  const assignShift = (doctorId: string, shift: Doctor['shift'], department?: string) => {
+  const assignShift = async (doctorId: string, shift: Doctor['shift'], department?: string) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await DoctorService.assignShift(doctorId, shift, department || 'General');
+      } catch (e) {
+        console.error('Failed to assign shift in backend:', e);
+      }
+    }
     setDoctors(prev => prev.map(doc => {
       if (doc.id === doctorId) {
         return { ...doc, shift, specialty: department || doc.specialty };
@@ -474,9 +538,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return doc;
     }));
     addToast('Successfully re-assigned doctor shift roster', 'success');
+    syncDataWithBackend();
   };
 
-  const requestLeave = (doctorId: string, isLeave: boolean) => {
+  const requestLeave = async (doctorId: string, isLeave: boolean) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await DoctorService.requestLeave(doctorId, isLeave);
+      } catch (e) {
+        console.error('Failed to update leave in backend:', e);
+      }
+    }
     setDoctors(prev => prev.map(doc => {
       if (doc.id === doctorId) {
         return { ...doc, status: isLeave ? 'Off-Duty' : 'Active' };
@@ -484,11 +556,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return doc;
     }));
     addToast(isLeave ? 'Doctor marked as Leave (Off-Duty)' : 'Doctor checked in active', 'success');
+    syncDataWithBackend();
   };
 
-  const registerPatient = (patient: any) => {
+  const registerPatient = async (patient: any) => {
+    let savedPatient = patient;
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        const res = await PatientService.register({
+          name: patient.name,
+          age: patient.age,
+          gender: patient.gender,
+          status: patient.status,
+          condition: patient.condition,
+          history: patient.history,
+          hospitalId: activeHospitalId
+        });
+        savedPatient = { ...patient, id: res.id };
+      } catch (e) {
+        console.error('Failed to register patient in backend:', e);
+      }
+    }
+
     const newPatient: Patient = {
-      id: patient.id || `pat-${Date.now().toString().slice(-4)}`,
+      id: savedPatient.id || `pat-${Date.now().toString().slice(-4)}`,
       name: patient.name,
       age: Number(patient.age) || 30,
       gender: patient.gender || 'Male',
@@ -514,6 +605,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       timestamp: 'Just now'
     };
     setActivityLogs(l => [newLog, ...l]);
+    syncDataWithBackend();
 
     if (patient.status === 'IPD') {
       const targetBed = beds.find(b => b.hospitalId === activeHospitalId && b.wardType === patient.wardType && b.status === 'Available');
@@ -539,8 +631,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Business logic actions simulating a server sync
-  const login = async (email: string, role: Role, facilityId?: string): Promise<boolean> => {
-    // Artificial latency
+  // Business logic actions simulating a server sync
+  const login = async (emailOrUsername: string, password: string, role: Role, facilityId?: string): Promise<boolean> => {
+    try {
+      if (import.meta.env.VITE_API_BASE_URL) {
+        const response = await AuthService.login({
+          username: emailOrUsername,
+          password: password
+        });
+        localStorage.setItem('healthsync_access_token', response.accessToken);
+        localStorage.setItem('healthsync_refresh_token', response.refreshToken);
+        localStorage.setItem('healthsync_user_role', response.role);
+        localStorage.setItem('healthsync_user_facility', facilityId || '');
+        
+        // Fetch full profile info from /auth/me to get the actual details
+        const profile = await AuthService.getProfile();
+        
+        const newUser: User = {
+          id: profile.id || `usr-${profile.role.toLowerCase()}-${Date.now().toString().slice(-4)}`,
+          name: profile.fullName || profile.username || 'Administrator',
+          email: profile.email || emailOrUsername,
+          role: profile.role as Role,
+          facilityId: facilityId || (profile.role === 'HOSPITAL_ADMIN' ? 'hosp-1' : undefined),
+          facilityName: facilityId ? hospitals.find(h => h.id === facilityId)?.name : (profile.role === 'HOSPITAL_ADMIN' ? 'Metro General District Hospital' : undefined),
+          districtId: profile.role === 'DISTRICT_ADMIN' ? 'District-A (Central)' : undefined,
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${profile.role}`
+        };
+        
+        setCurrentUser(newUser);
+        if (newUser.facilityId) {
+          setActiveHospitalId(newUser.facilityId);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error("Login API integration failure: ", err);
+      throw err; // throw to allow the component to display error
+    }
+
+    // Fallback for offline/demo environments
     await new Promise(resolve => setTimeout(resolve, 800));
     
     let userName = 'Administrator';
@@ -558,7 +687,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newUser: User = {
       id: `usr-${role.toLowerCase()}-${Date.now().toString().slice(-4)}`,
       name: userName,
-      email,
+      email: emailOrUsername,
       role,
       facilityId: facilityId || (role === 'HOSPITAL_ADMIN' ? 'hosp-1' : undefined),
       facilityName,
@@ -578,7 +707,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 1. Inventory Updates
-  const updateInventoryStock = (itemId: string, newStock: number) => {
+  const updateInventoryStock = async (itemId: string, newStock: number) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await InventoryService.updateStock(itemId, newStock);
+      } catch (e) {
+        console.error('Failed to update stock in backend:', e);
+      }
+    }
     setInventory(prev => prev.map(item => {
       if (item.id === itemId) {
         const daysLeft = Math.ceil(newStock / item.dailyConsumptionRate);
@@ -623,10 +759,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return item;
     }));
+    syncDataWithBackend();
   };
 
   // 2. Bed Occupancy Management
-  const transferBed = (bedId: string, updates: Partial<Bed>) => {
+  const transferBed = async (bedId: string, updates: Partial<Bed>) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await BedService.update(bedId, updates);
+      } catch (e) {
+        console.error('Failed to transfer bed in backend:', e);
+      }
+    }
     setBeds(prev => prev.map(bed => {
       if (bed.id === bedId) {
         const originalStatus = bed.status;
@@ -679,10 +823,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return bed;
     }));
+    syncDataWithBackend();
   };
 
   // 3. Doctor Roster Shift Update
-  const updateDoctorStatus = (doctorId: string, status: 'Active' | 'Standby' | 'Off-Duty') => {
+  const updateDoctorStatus = async (doctorId: string, status: 'Active' | 'Standby' | 'Off-Duty') => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await DoctorService.updateStatus(doctorId, status);
+      } catch (e) {
+        console.error('Failed to update doctor status in backend:', e);
+      }
+    }
     setDoctors(prev => prev.map(doc => {
       if (doc.id === doctorId) {
         const originalStatus = doc.status;
@@ -731,6 +883,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return doc;
     }));
+    syncDataWithBackend();
   };
 
   // 4. Redistribution Request Workflow
@@ -771,7 +924,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActivityLogs(l => [newLog, ...l]);
   };
 
-  const approveRedistribution = (requestId: string) => {
+  const approveRedistribution = async (requestId: string) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await RedistributionService.approve(requestId);
+      } catch (e) {
+        console.error('Failed to approve redistribution in backend:', e);
+      }
+    }
     setRedistributionRequests(prev => prev.map(req => {
       if (req.id === requestId) {
         // Log Action
@@ -794,6 +954,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return req;
     }));
+    syncDataWithBackend();
   };
 
   const shipRedistribution = (requestId: string) => {
@@ -891,9 +1052,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 5. Diagnostics / Laboratory Pipeline
-  const addLabTest = (patientName: string, testType: LabTest['testType'], technician?: string) => {
+  const addLabTest = async (patientName: string, testType: LabTest['testType'], technician?: string) => {
+    let savedId = `lab-${Date.now().toString().slice(-4)}`;
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        const res = await LabService.create({ patientName, testType, technician });
+        savedId = res.id;
+      } catch (e) {
+        console.error('Failed to create lab test in backend:', e);
+      }
+    }
     const newTest: LabTest = {
-      id: `lab-${Date.now().toString().slice(-4)}`,
+      id: savedId,
       patientName,
       testType,
       status: 'Pending',
@@ -921,9 +1091,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setActivityLogs(l => [newLog, ...l]);
     addToast(`Ordered diagnostic: ${testType} for ${patientName}`, 'success');
+    syncDataWithBackend();
   };
 
-  const updateCollectionStatus = (testId: string, status: LabTest['collectionStatus']) => {
+  const updateCollectionStatus = async (testId: string, status: LabTest['collectionStatus']) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await LabService.updateStage(testId, status || 'Pending');
+      } catch (e) {
+        console.error('Failed to update lab test collection status in backend:', e);
+      }
+    }
     setLaboratoryTests(prev => prev.map(test => {
       if (test.id === testId) {
         const updatedStatus = status === 'Ready' ? 'Completed' : status === 'Analyzing' ? 'In-Progress' : 'Pending';
@@ -936,14 +1114,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return test;
     }));
     addToast('Updated lab test collection stage', 'success');
+    syncDataWithBackend();
   };
 
-  const completeLabTest = (
+  const completeLabTest = async (
     testId: string, 
     value: string, 
     isCritical: boolean, 
     reagentLevel: 'Critical' | 'Low' | 'Normal'
   ) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await LabService.complete(testId, { value, isCritical, reagentLevelStatus: reagentLevel });
+      } catch (e) {
+        console.error('Failed to complete lab test in backend:', e);
+      }
+    }
     setLaboratoryTests(prev => prev.map(test => {
       if (test.id === testId) {
         const updated = {
@@ -1002,11 +1188,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return test;
     }));
+    syncDataWithBackend();
   };
 
   // 6. Alert Acknowledgement
-  const acknowledgeAlert = (alertId: string) => {
+  const acknowledgeAlert = async (alertId: string) => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+      try {
+        await AlertsService.acknowledge(alertId);
+      } catch (e) {
+        console.error('Failed to acknowledge alert in backend:', e);
+      }
+    }
     setAlerts(prev => prev.map(al => al.id === alertId ? { ...al, acknowledged: true } : al));
+    syncDataWithBackend();
   };
 
   // 7. Interactive AI LLM Assistant Response Simulation

@@ -8,6 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -63,6 +68,58 @@ public class GlobalExceptionHandler {
                 errors
         );
         return ResponseEntity.status(status).body(ApiResponse.error(apiError, "Validation failed"));
+    }
+
+    @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(Exception ex, HttpServletRequest request) {
+        logger.warn("Authentication failure: {}", ex.getMessage());
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        ApiError apiError = new ApiError(
+                status.value(),
+                status.getReasonPhrase(),
+                "Invalid username or password",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(ApiResponse.error(apiError, "Invalid username or password"));
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDisabledException(DisabledException ex, HttpServletRequest request) {
+        logger.warn("Disabled account login attempt: {}", ex.getMessage());
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        ApiError apiError = new ApiError(
+                status.value(),
+                status.getReasonPhrase(),
+                "Account is disabled. Contact administrator.",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(ApiResponse.error(apiError, "Account disabled"));
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleLockedException(LockedException ex, HttpServletRequest request) {
+        logger.warn("Locked account login attempt: {}", ex.getMessage());
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        ApiError apiError = new ApiError(
+                status.value(),
+                status.getReasonPhrase(),
+                "Account is locked. Contact administrator.",
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(ApiResponse.error(apiError, "Account locked"));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        logger.warn("Authentication exception: {}", ex.getMessage());
+        HttpStatus status = HttpStatus.UNAUTHORIZED;
+        ApiError apiError = new ApiError(
+                status.value(),
+                status.getReasonPhrase(),
+                "Authentication failed: " + ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(ApiResponse.error(apiError, "Authentication failed"));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

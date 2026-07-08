@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Card, Badge, Button, Table, Input } from '../components/common';
 import { 
@@ -17,6 +17,10 @@ import {
 } from 'recharts';
 
 export const AlertsCenter: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Reports";
+  }, []);
+
   const { alerts, acknowledgeAlert, triggerMockSync, addToast } = useApp();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');

@@ -3,11 +3,18 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { AppLayout } from '../components/layout';
 import { SkeletonLoader } from '../components/common/SkeletonLoader';
+import { LoadingScreen } from '../components/common';
+import { Role } from '../types';
 
 // Lazy loading clinical pages for bundle split optimization
+const Landing = lazy(() => import('../pages/Landing').then(m => ({ default: m.Landing })));
 const Login = lazy(() => import('../pages/auth/Login').then(m => ({ default: m.Login })));
 const Register = lazy(() => import('../pages/auth/Register').then(m => ({ default: m.Register })));
 const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword').then(m => ({ default: m.ForgotPassword })));
+const ResetPassword = lazy(() => import('../pages/auth/ResetPassword').then(m => ({ default: m.ResetPassword })));
+const EmailVerificationSuccess = lazy(() => import('../pages/auth/EmailVerificationSuccess').then(m => ({ default: m.EmailVerificationSuccess })));
+const RegistrationSuccess = lazy(() => import('../pages/auth/RegistrationSuccess').then(m => ({ default: m.RegistrationSuccess })));
+const Welcome = lazy(() => import('../pages/Welcome').then(m => ({ default: m.Welcome })));
 
 const SuperAdminDashboard = lazy(() => import('../pages/dashboard/SuperAdminDashboard').then(m => ({ default: m.SuperAdminDashboard })));
 const GovernmentCommandCenter = lazy(() => import('../pages/district/index').then(m => ({ default: m.GovernmentCommandCenter })));
@@ -58,71 +65,134 @@ const HomeRedirect: React.FC = () => {
   
   if (!currentUser) return <Navigate to="/login" replace />;
   
-  if (currentUser.role === 'SUPER_ADMIN') {
-    return <Navigate to="/dashboard/super" replace />;
-  } else if (currentUser.role === 'DISTRICT_ADMIN') {
-    return <Navigate to="/dashboard/district" replace />;
-  } else {
-    return <Navigate to="/dashboard/hospital" replace />;
+  return <Navigate to="/welcome" replace />;
+};
+
+interface RoleRouteProps {
+  allowedRoles: Role[];
+  children: React.ReactNode;
+}
+
+const RoleRoute: React.FC<RoleRouteProps> = ({ allowedRoles, children }) => {
+  const { currentUser } = useApp();
+  
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
   }
+  
+  if (!allowedRoles.includes(currentUser.role)) {
+    return <Navigate to="/welcome" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
 export const AppRoutes: React.FC = () => {
+  const { currentUser } = useApp();
+
   return (
     <Routes>
+      {/* Public Landing Page */}
+      <Route path="/" element={
+        currentUser ? (
+          <HomeRedirect />
+        ) : (
+          <Suspense fallback={<LoadingScreen />}>
+            <Landing />
+          </Suspense>
+        )
+      } />
+
       {/* Authentication */}
       <Route path="/login" element={
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><SkeletonLoader variant="card" className="w-80" /></div>}>
+        <Suspense fallback={<LoadingScreen />}>
           <Login />
         </Suspense>
       } />
       <Route path="/register" element={
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><SkeletonLoader variant="card" className="w-80" /></div>}>
+        <Suspense fallback={<LoadingScreen />}>
           <Register />
         </Suspense>
       } />
       <Route path="/forgot-password" element={
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><SkeletonLoader variant="card" className="w-80" /></div>}>
+        <Suspense fallback={<LoadingScreen />}>
           <ForgotPassword />
         </Suspense>
+      } />
+      <Route path="/reset-password" element={
+        <Suspense fallback={<LoadingScreen />}>
+          <ResetPassword />
+        </Suspense>
+      } />
+      <Route path="/email-verified" element={
+        <Suspense fallback={<LoadingScreen />}>
+          <EmailVerificationSuccess />
+        </Suspense>
+      } />
+      <Route path="/registration-success" element={
+        <Suspense fallback={<LoadingScreen />}>
+          <RegistrationSuccess />
+        </Suspense>
+      } />
+      <Route path="/welcome" element={
+        currentUser ? (
+          <Suspense fallback={<LoadingScreen />}>
+            <Welcome />
+          </Suspense>
+        ) : (
+          <Navigate to="/login" replace />
+        )
       } />
 
       {/* Main command shell */}
       <Route path="/" element={<AppLayout />}>
-        <Route index element={<HomeRedirect />} />
-        
         {/* Dashboards */}
-        <Route path="dashboard/super" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <SuperAdminDashboard />
-          </Suspense>
+        <Route path="dashboard/super" element={<Navigate to="/super-admin/dashboard" replace />} />
+        <Route path="super-admin/dashboard" element={
+          <RoleRoute allowedRoles={['SUPER_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <SuperAdminDashboard />
+            </Suspense>
+          </RoleRoute>
         } />
-        <Route path="dashboard/district" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <GovernmentCommandCenter />
-          </Suspense>
+        <Route path="dashboard/district" element={<Navigate to="/district/dashboard" replace />} />
+        <Route path="district/dashboard" element={
+          <RoleRoute allowedRoles={['DISTRICT_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <GovernmentCommandCenter />
+            </Suspense>
+          </RoleRoute>
         } />
-        <Route path="dashboard/hospital" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <HospitalAdminDashboard />
-          </Suspense>
+        <Route path="dashboard/hospital" element={<Navigate to="/hospital/dashboard" replace />} />
+        <Route path="hospital/dashboard" element={
+          <RoleRoute allowedRoles={['HOSPITAL_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <HospitalAdminDashboard />
+            </Suspense>
+          </RoleRoute>
         } />
 
         {/* Clinical Modules */}
         <Route path="inventory" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <MedicineInventory />
-          </Suspense>
+          <RoleRoute allowedRoles={['SUPER_ADMIN', 'DISTRICT_ADMIN', 'HOSPITAL_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <MedicineInventory />
+            </Suspense>
+          </RoleRoute>
         } />
         <Route path="beds" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <BedManagement />
-          </Suspense>
+          <RoleRoute allowedRoles={['HOSPITAL_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <BedManagement />
+            </Suspense>
+          </RoleRoute>
         } />
         <Route path="doctors" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <DoctorAttendance />
-          </Suspense>
+          <RoleRoute allowedRoles={['HOSPITAL_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <DoctorAttendance />
+            </Suspense>
+          </RoleRoute>
         } />
         <Route path="patients" element={
           <Suspense fallback={<LoadingFallback />}>
@@ -130,16 +200,20 @@ export const AppRoutes: React.FC = () => {
           </Suspense>
         } />
         <Route path="laboratory" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <LaboratoryManagement />
-          </Suspense>
+          <RoleRoute allowedRoles={['HOSPITAL_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <LaboratoryManagement />
+            </Suspense>
+          </RoleRoute>
         } />
         
         {/* Operations */}
         <Route path="redistribution" element={
-          <Suspense fallback={<LoadingFallback />}>
-            <ResourceRedistribution />
-          </Suspense>
+          <RoleRoute allowedRoles={['SUPER_ADMIN', 'DISTRICT_ADMIN']}>
+            <Suspense fallback={<LoadingFallback />}>
+              <ResourceRedistribution />
+            </Suspense>
+          </RoleRoute>
         } />
         <Route path="forecast" element={
           <Suspense fallback={<LoadingFallback />}>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button, Modal, Input, Select } from '../../components/common';
 import { useBedsQuery, useTransferBedMutation } from '../../hooks';
@@ -18,6 +18,10 @@ import {
 import { cn } from '../../utils';
 
 export const BedManagement: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Bed Allocation";
+  }, []);
+
   const { activeHospitalId } = useApp();
   const { data: beds = [], isLoading } = useBedsQuery(activeHospitalId);
   const transferBedMutation = useTransferBedMutation();

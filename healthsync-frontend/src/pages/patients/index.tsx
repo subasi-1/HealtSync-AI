@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Table, Button, Modal, Input, Select } from '../../components/common';
 import { 
@@ -23,6 +23,10 @@ import {
 import { Patient } from '../../types/index';
 
 export const PatientFootfall: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Patients";
+  }, []);
+
   const { registerPatient, dischargePatient, patients: patientsList, activeHospitalId } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');

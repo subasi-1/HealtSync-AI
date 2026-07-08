@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { ThemeToggle, Badge, Button, Modal } from '../common';
+import { ThemeToggle, Badge, Button, Modal, Logo } from '../common';
 import { 
   Bell, 
   MessageSquareCode, 
@@ -50,6 +50,13 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
   const navigate = useNavigate();
 
   const activeAlerts = alerts.filter(a => !a.acknowledged);
+
+  const getDashboardRoute = () => {
+    if (!currentUser) return '/';
+    if (currentUser.role === 'SUPER_ADMIN') return '/super-admin/dashboard';
+    if (currentUser.role === 'DISTRICT_ADMIN') return '/district/dashboard';
+    return '/hospital/dashboard';
+  };
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -122,10 +129,21 @@ export const Navbar: React.FC<NavbarProps> = ({ sidebarOpen, setSidebarOpen }) =
           <Menu className="h-5 w-5" />
         </button>
         
+        {/* Navbar brand & Logo */}
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-300 ease-in-out select-none"
+          aria-label="Go to HealthSync AI Home"
+        >
+          <Logo size={22} className="transition-transform duration-300" />
+          <span className="text-sm font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent transition-colors duration-300">
+            HealthSync AI
+          </span>
+        </Link>
+        <span className="hidden md:inline text-muted-foreground text-xs font-normal select-none">|</span>
+
         {/* Dynamic Context Header */}
         <div className="hidden items-center gap-1.5 text-sm md:flex select-none">
-          <span className="font-semibold text-foreground/80">Operations Command</span>
-          <span className="text-muted-foreground">/</span>
           <span className="text-muted-foreground capitalize">
             {currentUser?.role.toLowerCase().replace('_', ' ')}
           </span>

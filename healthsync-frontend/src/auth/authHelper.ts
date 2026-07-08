@@ -22,6 +22,7 @@ export const AuthHelper = {
     localStorage.removeItem(API_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(API_KEYS.USER_ROLE);
     localStorage.removeItem(API_KEYS.USER_FACILITY);
+    localStorage.removeItem('hs-user');
   },
 
   isTokenExpired: (token: string): boolean => {

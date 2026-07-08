@@ -46,25 +46,6 @@ CREATE TABLE test_results (
     CONSTRAINT fk_test_results_booking FOREIGN KEY (booking_id) REFERENCES test_bookings(id) ON DELETE CASCADE
 );
 
--- 5. Create notifications table
-CREATE TABLE notifications (
-    id UUID PRIMARY KEY,
-    message VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'UNREAD',
-    health_center_id UUID,
-    user_id UUID,
-    created_by VARCHAR(255) NOT NULL,
-    created_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_by VARCHAR(255) NOT NULL,
-    updated_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT fk_notifications_center FOREIGN KEY (health_center_id) REFERENCES health_centers(id),
-    CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE INDEX idx_notifications_user ON notifications(user_id);
-CREATE INDEX idx_notifications_status ON notifications(status);
-
 -- 6. Create notification_preferences table
 CREATE TABLE notification_preferences (
     id UUID PRIMARY KEY,

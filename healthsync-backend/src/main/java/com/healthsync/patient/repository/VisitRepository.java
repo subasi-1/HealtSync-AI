@@ -29,4 +29,13 @@ public interface VisitRepository extends JpaRepository<PatientVisit, UUID> {
             @Param("startDate") Instant startDate,
             @Param("endDate") Instant endDate
     );
+
+    long countByVisitDateAfter(Instant startDate);
+
+    long countByVisitDateBetween(Instant start, Instant end);
+
+    long countByVisitTypeIgnoreCaseAndVisitDateBetween(String visitType, Instant start, Instant end);
+
+    @Query("SELECT v.visitDate, COUNT(v) FROM PatientVisit v WHERE v.visitDate >= :startDate GROUP BY v.visitDate ORDER BY v.visitDate ASC")
+    List<Object[]> getVisitCountsByDateAfter(@Param("startDate") Instant startDate);
 }

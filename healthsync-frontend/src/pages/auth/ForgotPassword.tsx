@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Button, Input } from '../../components/common';
-import { Activity, Mail, ArrowLeft } from 'lucide-react';
+import { Card, Button, Input, Logo } from '../../components/common';
+import { Mail, ArrowLeft } from 'lucide-react';
 
 export const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    document.title = "HealthSync AI | Forgot Password";
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +31,14 @@ export const ForgotPassword: React.FC = () => {
 
       <div className="relative z-10 w-full max-w-md space-y-6">
         <div className="text-center">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Activity className="h-6 w-6" />
-          </div>
+          <Link to="/" className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+            <Logo size={24} className="text-white" />
+          </Link>
           <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
-            Recover Access Keys
+            HealthSync AI
           </h1>
           <p className="mt-1.5 text-xs text-muted-foreground uppercase font-bold tracking-wider">
-            HealthSync Operational Security Center
+            AI-Driven Health Center &amp; Supply Chain Management
           </p>
         </div>
 

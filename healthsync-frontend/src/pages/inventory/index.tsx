@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button, Table, Modal, Input, Select } from '../../components/common';
 import { useInventoryQuery } from '../../hooks';
@@ -21,6 +21,10 @@ import {
 } from 'recharts';
 
 export const MedicineInventory: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Inventory";
+  }, []);
+
   const { 
     activeHospitalId, 
     currentUser, 

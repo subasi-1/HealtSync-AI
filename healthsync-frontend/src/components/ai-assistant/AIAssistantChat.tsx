@@ -188,7 +188,7 @@ export const AIAssistantChat: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l border-border bg-card shadow-fluentXl sm:max-w-md animate-slide-in">
+    <div className="fixed sm:bottom-6 sm:right-6 sm:top-auto sm:left-auto inset-y-0 right-0 z-40 flex w-full sm:w-[380px] sm:h-[580px] flex-col border-l sm:border border-border bg-card sm:rounded-2xl rounded-none shadow-fluentXl animate-slide-in">
       {/* Drawer Header */}
       <div className="flex h-14 items-center justify-between border-b border-border bg-muted/20 px-4">
         <div className="flex items-center gap-2">

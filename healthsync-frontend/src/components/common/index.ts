@@ -8,3 +8,5 @@ export * from './Modal';
 export * from './ThemeToggle';
 export * from './ErrorBoundary';
 export * from './SkeletonLoader';
+export * from './Logo';
+export * from './LoadingScreen';

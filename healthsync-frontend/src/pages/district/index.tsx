@@ -30,6 +30,10 @@ import {
 } from 'recharts';
 
 export const GovernmentCommandCenter: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Dashboard";
+  }, []);
+
   const { alerts, acknowledgeAlert, triggerMockSync } = useApp();
   const { data: hospitals = [] } = useHospitalsQuery();
   const { data: inventory = [] } = useInventoryQuery();

@@ -89,12 +89,12 @@ export const setupAxiosInterceptors = (axiosInstance: AxiosInstance): void => {
 
         if (refreshToken) {
           try {
-            const response = await axiosInstance.post<{ accessToken: string }>(
+            const response = await axiosInstance.post<any>(
               API_ROUTES.AUTH.REFRESH,
               { refreshToken }
             );
 
-            const newAccessToken = response.data.accessToken;
+            const newAccessToken = response.data.data.accessToken;
             AuthHelper.setAccessToken(newAccessToken);
             processQueue(null, newAccessToken);
             isRefreshing = false;
@@ -107,12 +107,16 @@ export const setupAxiosInterceptors = (axiosInstance: AxiosInstance): void => {
             processQueue(refreshError, null);
             isRefreshing = false;
             AuthHelper.clearAuth();
-            window.location.href = '/login?expired=true';
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login?expired=true';
+            }
             return Promise.reject(refreshError);
           }
         } else {
           AuthHelper.clearAuth();
-          window.location.href = '/login';
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
           return Promise.reject(error);
         }
       }

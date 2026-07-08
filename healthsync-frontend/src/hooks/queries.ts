@@ -291,3 +291,66 @@ export const useAcknowledgeAlertMutation = () => {
     }
   });
 };
+
+export const useAiDashboardQuery = () => {
+  return useQuery({
+    queryKey: ['ai-dashboard'],
+    queryFn: () => AIService.getDashboardMetrics(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiDemandQuery = () => {
+  return useQuery({
+    queryKey: ['ai-demand'],
+    queryFn: () => AIService.getMedicineDemand(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiStockoutQuery = () => {
+  return useQuery({
+    queryKey: ['ai-stockout'],
+    queryFn: () => AIService.getStockoutRisk(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiFootfallQuery = () => {
+  return useQuery({
+    queryKey: ['ai-footfall'],
+    queryFn: () => AIService.getPatientFootfall(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiBedsQuery = () => {
+  return useQuery({
+    queryKey: ['ai-beds'],
+    queryFn: () => AIService.getBedOccupancy(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiDoctorsQuery = () => {
+  return useQuery({
+    queryKey: ['ai-doctors'],
+    queryFn: () => AIService.getDoctorWorkload(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};
+
+export const useAiRecommendationsQuery = () => {
+  return useQuery({
+    queryKey: ['ai-recommendations'],
+    queryFn: () => AIService.getRecommendations(),
+    retry: 3,
+    refetchOnWindowFocus: false
+  });
+};

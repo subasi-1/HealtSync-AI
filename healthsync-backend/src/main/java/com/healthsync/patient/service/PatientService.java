@@ -39,12 +39,30 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public List<PatientResponse> searchPatients(String query, String mobile, String patientId, String status) {
-        return patientRepository.searchPatients(
-                (query != null && !query.isBlank()) ? query : null,
-                (mobile != null && !mobile.isBlank()) ? mobile : null,
-                (patientId != null && !patientId.isBlank()) ? patientId : null,
-                (status != null && !status.isBlank()) ? status : null
-        ).stream()
+        StringBuilder jpql = new StringBuilder("SELECT p FROM Patient p WHERE 1=1");
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+
+        if (query != null && !query.isBlank()) {
+            jpql.append(" AND LOWER(p.fullName) LIKE :query");
+            params.put("query", "%" + query.trim().toLowerCase() + "%");
+        }
+        if (mobile != null && !mobile.isBlank()) {
+            jpql.append(" AND p.mobileNumber = :mobile");
+            params.put("mobile", mobile.trim());
+        }
+        if (patientId != null && !patientId.isBlank()) {
+            jpql.append(" AND p.patientId = :patientId");
+            params.put("patientId", patientId.trim());
+        }
+        if (status != null && !status.isBlank()) {
+            jpql.append(" AND p.status = :status");
+            params.put("status", status.trim());
+        }
+
+        jakarta.persistence.TypedQuery<Patient> typedQuery = entityManager.createQuery(jpql.toString(), Patient.class);
+        params.forEach(typedQuery::setParameter);
+
+        return typedQuery.getResultList().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Badge, Button, Table } from '../../components/common';
 import { useApp } from '../../context/AppContext';
 import { 
@@ -41,6 +41,10 @@ interface DownloadHistory {
 }
 
 export const Reports: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Analytics";
+  }, []);
+
   const { 
     addToast, 
     inventory, 

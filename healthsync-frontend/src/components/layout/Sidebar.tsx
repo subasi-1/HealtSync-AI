@@ -1,10 +1,10 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../utils';
+import { Logo } from '../common';
 import { 
   LayoutDashboard, 
-  Activity, 
   ShieldAlert, 
   FileText, 
   Settings, 
@@ -34,6 +34,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const role = currentUser.role;
 
+  const getDashboardRoute = () => {
+    if (role === 'SUPER_ADMIN') return '/super-admin/dashboard';
+    if (role === 'DISTRICT_ADMIN') return '/district/dashboard';
+    return '/hospital/dashboard';
+  };
+
   // Base navigation links
   const commonLinks = [
     { to: '/forecast', label: 'AI Operations Forecast', icon: TrendingUp },
@@ -43,17 +49,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   const adminLinks = {
     SUPER_ADMIN: [
-      { to: '/dashboard/super', label: 'Super Admin HQ', icon: LayoutDashboard },
+      { to: '/super-admin/dashboard', label: 'Super Admin HQ', icon: LayoutDashboard },
       { to: '/redistribution', label: 'AI Supply Reallocation', icon: Shuffle },
       { to: '/inventory', label: 'Supply Ledger', icon: Pill },
     ],
     DISTRICT_ADMIN: [
-      { to: '/dashboard/district', label: 'District Operations', icon: LayoutDashboard },
+      { to: '/district/dashboard', label: 'District Operations', icon: LayoutDashboard },
       { to: '/redistribution', label: 'Inter-Facility Transfer', icon: Shuffle },
       { to: '/inventory', label: 'District Stocks', icon: Pill },
     ],
     HOSPITAL_ADMIN: [
-      { to: '/dashboard/hospital', label: 'Hospital Command', icon: LayoutDashboard },
+      { to: '/hospital/dashboard', label: 'Hospital Command', icon: LayoutDashboard },
       { to: '/inventory', label: 'Pharmacy Stock', icon: Pill },
       { to: '/beds', label: 'Beds Allocation', icon: BedDouble },
       { to: '/doctors', label: 'Staff Roster', icon: Users },
@@ -69,34 +75,47 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   };
 
   return (
-    <aside
-      className={cn(
-        'relative z-20 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-fluentSm',
-        isOpen ? 'w-64' : 'w-16'
+    <>
+      {/* Mobile Drawer Backdrop */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)}
+          className="fixed inset-0 z-20 bg-background/60 backdrop-blur-sm md:hidden animate-fade-in"
+        />
       )}
-    >
-      {/* Brand Section */}
-      <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4 transition-colors duration-300 ease-in-out">
-        <div className="flex items-center overflow-hidden">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-active text-white transition-colors duration-300 ease-in-out">
-            <Activity className="h-4.5 w-4.5" />
-          </div>
-          <span className={cn(
-            "text-sm font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent transition-all duration-300 ease-in-out whitespace-nowrap",
-            isOpen ? "opacity-100 max-w-[150px] ml-2.5" : "opacity-0 max-w-0 overflow-hidden ml-0 pointer-events-none"
-          )}>
-            HealthSync AI
-          </span>
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-30 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-fluentSm md:relative md:translate-x-0',
+          isOpen 
+            ? 'w-64 translate-x-0' 
+            : 'w-64 -translate-x-full md:w-16 md:translate-x-0'
+        )}
+      >
+        {/* Brand Section */}
+        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4 transition-colors duration-300 ease-in-out">
+          <Link 
+            to="/" 
+            className="flex items-center overflow-hidden cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-300 ease-in-out select-none"
+            aria-label="Go to HealthSync AI Home"
+          >
+            <Logo size={22} className="shrink-0 transition-transform duration-300" />
+            <span className={cn(
+              "text-sm font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent transition-all duration-300 ease-in-out whitespace-nowrap",
+              isOpen ? "opacity-100 max-w-[150px] ml-2.5" : "opacity-0 max-w-0 overflow-hidden ml-0 pointer-events-none"
+            )}>
+              HealthSync AI
+            </span>
+          </Link>
+          
+          {/* Toggle Collapse Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="absolute -right-3 top-4 hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/80 shadow-fluentSm hover:text-sidebar-active hover:bg-sidebar-hover transition-all duration-300 ease-in-out active:scale-95"
+          >
+            {isOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          </button>
         </div>
-        
-        {/* Toggle Collapse Button */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground/80 shadow-fluentSm hover:text-sidebar-active hover:bg-sidebar-hover transition-all duration-300 ease-in-out active:scale-95"
-        >
-          {isOpen ? <ChevronLeft className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        </button>
-      </div>
 
       {/* Tenant Indicator */}
       {isOpen && (
@@ -228,6 +247,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         </button>
       </div>
     </aside>
+  </>
   );
 };
 export default Sidebar;

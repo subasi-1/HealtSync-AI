@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { Card, Badge, Button, Table, Modal, Select, Input } from '../components/common';
 import { 
@@ -16,6 +16,10 @@ import {
 import { cn } from '../utils';
 
 export const ResourceRedistribution: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Analytics";
+  }, []);
+
   const { 
     redistributionRequests, 
     hospitals, 

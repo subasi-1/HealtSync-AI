@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Card, Badge, Button } from '../../components/common';
 import { InteractiveMap } from '../../components/dashboard/InteractiveMap';
@@ -25,6 +25,10 @@ import {
 } from 'lucide-react';
 
 export const SuperAdminDashboard: React.FC = () => {
+  useEffect(() => {
+    document.title = "HealthSync AI | Dashboard";
+  }, []);
+
   const { alerts, activityLogs } = useApp();
   const { data: hospitals = [] } = useHospitalsQuery();
   const { data: inventory = [] } = useInventoryQuery();
