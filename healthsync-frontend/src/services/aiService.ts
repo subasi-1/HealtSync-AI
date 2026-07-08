@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const AI_BASE_URL =
-  import.meta.env.VITE_AI_API_URL || "http://localhost:8000";
+  import.meta.env.VITE_AI_API_URL ||
+  'https://healtsync-ai-1.onrender.com';
 export const aiClient = axios.create({
   baseURL: AI_BASE_URL,
   timeout: 15000,
