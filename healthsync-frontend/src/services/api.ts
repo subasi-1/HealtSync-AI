@@ -44,8 +44,8 @@ export const AuthService = {
     }
     return simulateLatency({
       id: 'mock-user-1',
-      username: 'director.rajesh',
-      email: 'director.rajesh@healthsync.gov',
+      username: 'director.admin',
+      email: 'director.admin@healthsync.org',
       fullName: 'Chief Director Rajesh',
       role: 'SUPER_ADMIN',
       status: 'ACTIVE'
@@ -228,7 +228,7 @@ export const DoctorService = {
         specialty: doc.specialization || 'General Practice',
         status: doc.user?.status === 'ACTIVE' ? 'Active' : 'Off-Duty',
         shift: doc.defaultShift?.name || 'Day',
-        contact: doc.user?.email || 'escalations@healthsync.gov',
+        contact: doc.user?.email || 'escalations@healthsync.org',
         attendanceRate: 95,
         satisfactionScore: 4.8,
         hospitalId: doc.healthCenter?.id || '',

@@ -113,8 +113,8 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 3. Seed Users
         String defaultPass = passwordEncoder.encode("demo1234");
-        User uSuper = getOrCreateUser("director.rajesh", defaultPass, "director.rajesh@healthsync.gov", "Chief Director Rajesh", Role.SUPER_ADMIN);
-        User uDistrict = getOrCreateUser("priya.district", defaultPass, "priya.district@healthsync.gov", "District Coordinator Priya", Role.DISTRICT_ADMIN);
+        User uSuper = getOrCreateUser("director.admin", defaultPass, "director.admin@healthsync.org", "Chief Director Rajesh", Role.SUPER_ADMIN);
+        User uDistrict = getOrCreateUser("priya.district", defaultPass, "priya.district@healthsync.org", "District Coordinator Priya", Role.DISTRICT_ADMIN);
         User uMetro = getOrCreateUser("admin.metro", defaultPass, "admin.metro@healthsync.org", "Metro General Admin", Role.HOSPITAL_ADMIN);
 
         // 4. Wards & Beds seeding
@@ -138,7 +138,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         Shift shiftNight = getOrCreateShift("Night", LocalTime.of(16, 0), LocalTime.of(8, 0));
 
         // Doctor User Account
-        User docUser = getOrCreateUser("dr.alok", defaultPass, "alok.sharma@healthsync.gov", "Dr. Alok Sharma", Role.HOSPITAL_ADMIN);
+        User docUser = getOrCreateUser("dr.alok", defaultPass, "alok.sharma@healthsync.org", "Dr. Alok Sharma", Role.HOSPITAL_ADMIN);
         Doctor doc = getOrCreateDoctor(docUser, "LIC-100234", "General Practice", hosp1, shiftMorn);
 
         // Daily Attendance log
