@@ -26,15 +26,6 @@ export const Login: React.FC = () => {
 
   const handleRoleSelection = (selectedRole: Role) => {
     setRole(selectedRole);
-    // Autofill demo accounts
-    if (selectedRole === 'SUPER_ADMIN') {
-      setEmail('director.rajesh@healthsync.gov');
-    } else if (selectedRole === 'DISTRICT_ADMIN') {
-      setEmail('priya.district@healthsync.gov');
-    } else {
-      setEmail('admin.metro@healthsync.org');
-    }
-    setPassword('demo1234');
   };
 
   // Redirect if already logged in — use replace to avoid back-button loops
@@ -44,10 +35,9 @@ export const Login: React.FC = () => {
     }
   }, [currentUser]); // intentionally omit navigate to avoid stale closure issues
 
-  // Run initial auto-fill on boot
+  // Set document title on mount
   React.useEffect(() => {
     document.title = "HealthSync AI | Login";
-    handleRoleSelection('SUPER_ADMIN');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,9 +88,8 @@ export const Login: React.FC = () => {
           </p>
         </div>
 
-        {/* Login Form Container */}
         <Card variant="acrylic" className="p-6 md:p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             {error && (
               <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
                 {error}
@@ -135,21 +124,23 @@ export const Login: React.FC = () => {
               <Input
                 label="Security Access Email"
                 type="email"
-                placeholder="email@healthsync.gov"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="username"
               />
               
               <div className="relative">
                 <Input
                   label="Access Password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="pr-10"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
